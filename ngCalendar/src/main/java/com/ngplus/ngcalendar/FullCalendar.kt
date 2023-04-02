@@ -28,8 +28,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.Date
 
 class FullCalendar : ComponentActivity() {
+    private val allDays = listOf( "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY" ,"SUNDAY")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -47,8 +50,8 @@ class FullCalendar : ComponentActivity() {
             ){
                 Calendar(
                     calendarInput = calendarInputList,
-                    onDayClick = { day->
-                        clickedCalendarElem = calendarInputList.first { it.day == day }
+                    onDayClick = { day ->
+                        clickedCalendarElem = calendarInputList.find { it.day.day == day }
                     },
                     month = "September",
                     modifier = Modifier
@@ -62,13 +65,8 @@ class FullCalendar : ComponentActivity() {
                         .padding(10.dp)
                         .align(Alignment.Center)
                 ){
-                    clickedCalendarElem?.toDos?.forEach {
-                        Text(
-                            if(it.contains("Day")) it else "- $it",
-                            color = white,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = if(it.contains("Day")) 25.sp else 18.sp
-                        )
+                    clickedCalendarElem?.day?.hours?.forEach{
+                        Text("$it")
                     }
                 }
             }
@@ -78,15 +76,26 @@ class FullCalendar : ComponentActivity() {
 
     private fun createCalendarList(): List<CalendarInput> {
         val calendarInputs = mutableListOf<CalendarInput>()
-        for (i in 1..31) {
+        val calendar = Calendar.getInstance()
+        val numberOfDaysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+        // data from api
+        val dayOfWeek = 7
+        val todayName = allDays[dayOfWeek - 1]
+        val dayOfMonth = 2
+        val firstDayInMonth = 6
+        val nameFirstDayInMonth = allDays[firstDayInMonth - 1]
+        val month = 4
+        val year = 2023
+        // end data from api
+
+        for (j in 1 until firstDayInMonth){
+            calendarInputs.add(CalendarInput(Day(0,0,0, listOf())))
+        }
+        for (i in 1..numberOfDaysInMonth) {
             calendarInputs.add(
                 CalendarInput(
-                    i,
-                    toDos = listOf(
-                        "Day $i:",
-                        "2 p.m. Buying groceries",
-                        "4 p.m. Meeting with Larissa"
-                    )
+                    // call DB
+                    Day(year,month,i, listOf("9:00","9:30")),
                 )
             )
         }
@@ -103,7 +112,7 @@ fun Calendar(
     modifier: Modifier = Modifier,
     calendarInput: List<CalendarInput>,
     onDayClick:(Int)->Unit,
-    strokeWidth:Float = 15f,
+    strokeWidth:Float = 5f,
     month:String
 ) {
 
@@ -139,6 +148,9 @@ fun Calendar(
                             val column =
                                 (offset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
                             val row = (offset.y / canvasSize.height * CALENDAR_ROWS).toInt() + 1
+                            /*
+                            TODO to adapt for dynamic Date
+                             */
                             val day = column + (row - 1) * CALENDAR_COLUMNS
                             if (day <= calendarInput.size) {
                                 onDayClick(day)
@@ -185,12 +197,14 @@ fun Calendar(
 
             drawRoundRect(
                 orange,
-                cornerRadius = CornerRadius(25f,25f),
+                cornerRadius = CornerRadius(5f,5f),
                 style = Stroke(
                     width = strokeWidth
                 )
             )
-
+            /*
+            draw lines for row
+             */
             for(i in 1 until CALENDAR_ROWS){
                 drawLine(
                     color = orange,
@@ -199,6 +213,9 @@ fun Calendar(
                     strokeWidth = strokeWidth
                 )
             }
+            /*
+            draw lines for column
+             */
             for(i in 1 until CALENDAR_COLUMNS){
                 drawLine(
                     color = orange,
@@ -208,12 +225,15 @@ fun Calendar(
                 )
             }
             val textHeight = 17.dp.toPx()
+            /*
+            display days
+             */
             for(i in calendarInput.indices){
                 val textPositionX = xSteps * (i% CALENDAR_COLUMNS) + strokeWidth
                 val textPositionY = (i / CALENDAR_COLUMNS) * ySteps + textHeight + strokeWidth/2
                 drawContext.canvas.nativeCanvas.apply {
                     drawText(
-                        "${i+1}",
+                        if(calendarInput[i].day.day==0) "" else calendarInput[i].day.day.toString(),
                         textPositionX,
                         textPositionY,
                         Paint().apply {
@@ -229,7 +249,21 @@ fun Calendar(
 
 }
 
+class Day( val year: Int, val month : Int,val day : Int,val hours: List<String>){
+    override fun equals(other: Any?): Boolean {
+        //return super.equals(other)
+        val day = other as Day
+        return day.day==this.day && day.month==this.month && day.year==this.year
+    }
+
+    override fun hashCode(): Int {
+        return super.hashCode()
+    }
+
+    override fun toString(): String {
+        return super.toString()
+    }
+}
 data class CalendarInput(
-    val day:Int,
-    val toDos:List<String> = emptyList()
+    val day : Day,
 )
