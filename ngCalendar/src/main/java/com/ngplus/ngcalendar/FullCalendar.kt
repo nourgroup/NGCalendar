@@ -42,6 +42,9 @@ class FullCalendar : ComponentActivity() {
             var clickedCalendarElem by remember {
                 mutableStateOf<CalendarInput?>(null)
             }
+            var monthState by remember {
+                mutableStateOf<Day?>(Day(1,1,1, listOf()))
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -51,9 +54,10 @@ class FullCalendar : ComponentActivity() {
                 Calendar(
                     calendarInput = calendarInputList,
                     onDayClick = { day ->
-                        clickedCalendarElem = calendarInputList.find { it.day.day == day }
+                        clickedCalendarElem = calendarInputList.find { it.day == day }
+                        monthState = day
                     },
-                    month = "September",
+                    month = monthState?.month.toString(),
                     modifier = Modifier
                         .padding(10.dp)
                         .fillMaxWidth()
@@ -65,6 +69,7 @@ class FullCalendar : ComponentActivity() {
                         .padding(10.dp)
                         .align(Alignment.Center)
                 ){
+                    Text(text = "${clickedCalendarElem?.day?.day}/${clickedCalendarElem?.day?.month}/${clickedCalendarElem?.day?.year}")
                     clickedCalendarElem?.day?.hours?.forEach{
                         Text("$it")
                     }
@@ -89,7 +94,7 @@ class FullCalendar : ComponentActivity() {
         // end data from api
 
         for (j in 1 until firstDayInMonth){
-            calendarInputs.add(CalendarInput(Day(0,0,0, listOf())))
+            calendarInputs.add(CalendarInput(Day(0,0,0, listOf("0:00"))))
         }
         for (i in 1..numberOfDaysInMonth) {
             calendarInputs.add(
@@ -111,7 +116,7 @@ private const val CALENDAR_COLUMNS = 7
 fun Calendar(
     modifier: Modifier = Modifier,
     calendarInput: List<CalendarInput>,
-    onDayClick:(Int)->Unit,
+    onDayClick:(Day)->Unit,
     strokeWidth:Float = 5f,
     month:String
 ) {
@@ -149,11 +154,12 @@ fun Calendar(
                                 (offset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
                             val row = (offset.y / canvasSize.height * CALENDAR_ROWS).toInt() + 1
                             /*
-                            TODO to adapt for dynamic Date
+                            find the clicked day the belong to canvas
                              */
-                            val day = column + (row - 1) * CALENDAR_COLUMNS
-                            if (day <= calendarInput.size) {
-                                onDayClick(day)
+                            val indexDay = (column - 1) + (row - 1) * CALENDAR_COLUMNS
+                            val selectedDay = calendarInput[indexDay]
+                            if (selectedDay.day.day <= calendarInput.size) {
+                                onDayClick(selectedDay.day)
                                 clickAnimationOffset = offset
                                 scope.launch {
                                     animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
