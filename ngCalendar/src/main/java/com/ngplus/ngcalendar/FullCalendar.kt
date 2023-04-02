@@ -88,7 +88,7 @@ class FullCalendar : ComponentActivity() {
         val todayName = allDays[dayOfWeek - 1]
         val dayOfMonth = 2
         val firstDayInMonth = 6
-        val nameFirstDayInMonth = allDays[firstDayInMonth - 1]
+        //val nameFirstDayInMonth = allDays[firstDayInMonth - 1]
         val month = 4
         val year = 2023
         // end data from api
