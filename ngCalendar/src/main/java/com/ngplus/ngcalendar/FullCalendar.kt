@@ -31,87 +31,85 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 
-class FullCalendar : ComponentActivity() {
-    private val allDaysUS = listOf( "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY","SUNDAY" )
-    private val allDaysFR = listOf( "Lun", "Mar", "Mer", "Jeu", "Ven", "sam","Dim" )
-    private val mapFrenchCalendar = listOf( 7,1,2,3,4,5,6)
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            val calendarInputList by remember {
-                mutableStateOf(createCalendarList())
-            }
-            var clickedCalendarElem by remember {
-                mutableStateOf<CalendarInput?>(null)
-            }
-            var dayState by remember {
-                mutableStateOf<Day?>(Day(1,1,1, listOf()))
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(gray),
-                contentAlignment = Alignment.TopCenter
-            ){
-                Calendar(
-                    calendarInput = calendarInputList,
-                    onDayClick = { day ->
-                        clickedCalendarElem = calendarInputList.find { it.day == day }
-                        dayState = day
-                    },
-                    titleDate = "${dayState?.month?.plus(1)}/${dayState?.year}",
-                    modifier = Modifier
-                        .padding(10.dp)
-                        .fillMaxWidth()
-                        .aspectRatio(1.3f)
-                )
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .align(Alignment.Center)
-                ){
-                    Text(text = "${clickedCalendarElem?.day?.day}/${clickedCalendarElem?.day?.month}/${clickedCalendarElem?.day?.year}")
-                    clickedCalendarElem?.day?.hours?.forEach{
-                        Text("$it")
-                    }
-                }
+private val allDaysUS = listOf( "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY","SUNDAY" )
+private val allDaysFR = listOf( "Lun", "Mar", "Mer", "Jeu", "Ven", "sam","Dim" )
+private val mapFrenchCalendar = listOf( 7,1,2,3,4,5,6)
+
+@Composable
+fun Cal() {
+    val calendarInputList by remember {
+        mutableStateOf(createCalendarList())
+    }
+    var clickedCalendarElem by remember {
+        mutableStateOf<CalendarInput?>(null)
+    }
+    var dayState by remember {
+        mutableStateOf<Day?>(Day(1, 1, 1, listOf()))
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(gray),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Calendar(
+            calendarInput = calendarInputList,
+            onDayClick = { day ->
+                clickedCalendarElem = calendarInputList.find { it.day == day }
+                dayState = day
+            },
+            titleDate = "${dayState?.month?.plus(1)}/${dayState?.year}",
+            modifier = Modifier
+                .padding(10.dp)
+                .fillMaxWidth()
+                .aspectRatio(1.3f)
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+                .align(Alignment.Center)
+        ) {
+            Text(text = "${clickedCalendarElem?.day?.day}/${clickedCalendarElem?.day?.month}/${clickedCalendarElem?.day?.year}")
+            clickedCalendarElem?.day?.hours?.forEach {
+                Text("$it")
             }
         }
     }
-
-
-    private fun createCalendarList(): List<CalendarInput> {
-        val calendarInputs = mutableListOf<CalendarInput>()
-        // calendar
-        val calendar = Calendar.getInstance()
-        val month = calendar.get(Calendar.MONTH)
-        val year = calendar.get(Calendar.YEAR)
-        calendar.set(Calendar.MONTH, month)
-        val numberOfDaysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-        calendar[Calendar.YEAR] = year
-        calendar[Calendar.MONTH] = month
-        calendar[Calendar.DAY_OF_MONTH] = 1
-        // 1..7
-        val firstDayInMonthUS = calendar[Calendar.DAY_OF_WEEK] - 1
-        val firstDayInMonth = mapFrenchCalendar[firstDayInMonthUS]
-
-        // end data from api
-
-        for (j in 1 until firstDayInMonth){
-            calendarInputs.add(CalendarInput(Day(0,0,0, listOf(firstDayInMonth.toString()))))
-        }
-        for (i in 1..numberOfDaysInMonth) {
-            calendarInputs.add(
-                CalendarInput(
-                    Day(year,month,i, listOf(allDaysFR[firstDayInMonth])),
-                )
-            )
-        }
-        return calendarInputs
-    }
-
 }
+
+
+private fun createCalendarList(): List<CalendarInput> {
+    val calendarInputs = mutableListOf<CalendarInput>()
+    // calendar
+    val calendar = Calendar.getInstance()
+    val month = calendar.get(Calendar.MONTH)
+    val year = calendar.get(Calendar.YEAR)
+    calendar.set(Calendar.MONTH, month)
+    val numberOfDaysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+    calendar[Calendar.YEAR] = year
+    calendar[Calendar.MONTH] = month
+    calendar[Calendar.DAY_OF_MONTH] = 1
+    // 1..7
+    val firstDayInMonthUS = calendar[Calendar.DAY_OF_WEEK] - 1
+    val firstDayInMonth = mapFrenchCalendar[firstDayInMonthUS]
+
+    // end data from api
+
+    for (j in 1 until firstDayInMonth){
+        calendarInputs.add(CalendarInput(Day(0,0,0, listOf(firstDayInMonth.toString()))))
+    }
+    for (i in 1..numberOfDaysInMonth) {
+        calendarInputs.add(
+            CalendarInput(
+                Day(year,month,i, listOf(allDaysFR[firstDayInMonth])),
+            )
+        )
+    }
+    return calendarInputs
+}
+
+
 
 private const val CALENDAR_ROWS = 5
 private const val CALENDAR_COLUMNS = 7

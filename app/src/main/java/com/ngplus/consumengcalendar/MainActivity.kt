@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.ngplus.consumengcalendar.ui.theme.ConsumeNGCalendarTheme
-import com.ngplus.ngcalendar.ui.theme.FullCalendar
+import com.ngplus.ngcalendar.ui.theme.Cal
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,12 +35,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(name: String) {
-    val context = LocalContext.current
+    /*val context = LocalContext.current
     Button(onClick = {
         context.startActivity(Intent(context, FullCalendar::class.java))
     }) {
         Text(text = "Hello $name!")
-    }
+    }*/
+    Cal()
 }
 
 @Preview(showBackground = true)
