@@ -28,11 +28,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Date
+import java.util.*
+
 
 class FullCalendar : ComponentActivity() {
-    private val allDays = listOf( "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY" ,"SUNDAY")
+    private val allDaysUS = listOf( "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY","SUNDAY" )
+    private val allDaysFR = listOf( "Lun", "Mar", "Mer", "Jeu", "Ven", "sam","Dim" )
+    private val mapFrenchCalendar = listOf( 7,1,2,3,4,5,6)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -42,7 +44,7 @@ class FullCalendar : ComponentActivity() {
             var clickedCalendarElem by remember {
                 mutableStateOf<CalendarInput?>(null)
             }
-            var monthState by remember {
+            var dayState by remember {
                 mutableStateOf<Day?>(Day(1,1,1, listOf()))
             }
             Box(
@@ -55,9 +57,9 @@ class FullCalendar : ComponentActivity() {
                     calendarInput = calendarInputList,
                     onDayClick = { day ->
                         clickedCalendarElem = calendarInputList.find { it.day == day }
-                        monthState = day
+                        dayState = day
                     },
-                    month = monthState?.month.toString(),
+                    titleDate = "${dayState?.month?.plus(1)}/${dayState?.year}",
                     modifier = Modifier
                         .padding(10.dp)
                         .fillMaxWidth()
@@ -81,26 +83,28 @@ class FullCalendar : ComponentActivity() {
 
     private fun createCalendarList(): List<CalendarInput> {
         val calendarInputs = mutableListOf<CalendarInput>()
+        // calendar
         val calendar = Calendar.getInstance()
+        val month = calendar.get(Calendar.MONTH)
+        val year = calendar.get(Calendar.YEAR)
+        calendar.set(Calendar.MONTH, month)
         val numberOfDaysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-        // data from api
-        val dayOfWeek = 7
-        val todayName = allDays[dayOfWeek - 1]
-        val dayOfMonth = 2
-        val firstDayInMonth = 6
-        //val nameFirstDayInMonth = allDays[firstDayInMonth - 1]
-        val month = 4
-        val year = 2023
+        calendar[Calendar.YEAR] = year
+        calendar[Calendar.MONTH] = month
+        calendar[Calendar.DAY_OF_MONTH] = 1
+        // 1..7
+        val firstDayInMonthUS = calendar[Calendar.DAY_OF_WEEK] - 1
+        val firstDayInMonth = mapFrenchCalendar[firstDayInMonthUS]
+
         // end data from api
 
         for (j in 1 until firstDayInMonth){
-            calendarInputs.add(CalendarInput(Day(0,0,0, listOf("0:00"))))
+            calendarInputs.add(CalendarInput(Day(0,0,0, listOf(firstDayInMonth.toString()))))
         }
         for (i in 1..numberOfDaysInMonth) {
             calendarInputs.add(
                 CalendarInput(
-                    // call DB
-                    Day(year,month,i, listOf("9:00","9:30")),
+                    Day(year,month,i, listOf(allDaysFR[firstDayInMonth])),
                 )
             )
         }
@@ -118,7 +122,7 @@ fun Calendar(
     calendarInput: List<CalendarInput>,
     onDayClick:(Day)->Unit,
     strokeWidth:Float = 5f,
-    month:String
+    titleDate:String
 ) {
 
     var canvasSize by remember {
@@ -139,10 +143,10 @@ fun Calendar(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(
-            text = month,
+            text = titleDate,
             fontWeight = FontWeight.SemiBold,
             color = white,
-            fontSize = 40.sp
+            fontSize = 20.sp
         )
         Canvas(
             modifier = Modifier
