@@ -26,28 +26,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    Cal()
                 }
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String) {
-    /*val context = LocalContext.current
-    Button(onClick = {
-        context.startActivity(Intent(context, FullCalendar::class.java))
-    }) {
-        Text(text = "Hello $name!")
-    }*/
-    Cal()
-}
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     ConsumeNGCalendarTheme {
-        Greeting("Android")
+        Cal()
     }
 }

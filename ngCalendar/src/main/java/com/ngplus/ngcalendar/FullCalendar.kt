@@ -1,15 +1,15 @@
 package com.ngplus.ngcalendar.ui.theme
 
 import android.graphics.Paint
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import android.util.Log
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,9 +24,12 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ngplus.ngcalendar.R
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -37,8 +40,8 @@ private val mapFrenchCalendar = listOf( 7,1,2,3,4,5,6)
 
 @Composable
 fun Cal() {
-    val calendarInputList by remember {
-        mutableStateOf(createCalendarList())
+    var calendarInputList by remember {
+        mutableStateOf(currentDateConfiguration())
     }
     var clickedCalendarElem by remember {
         mutableStateOf<CalendarInput?>(null)
@@ -53,8 +56,12 @@ fun Cal() {
         contentAlignment = Alignment.TopCenter
     ) {
         Calendar(
-            calendarInput = calendarInputList,
+            //calendarInput = calendarInputList,
+            onMonthAndYearClick = {
+                calendarInputList = it
+            },
             onDayClick = { day ->
+                Log.i("test_calendar", "${day.year}/${day.month}/${day.day}")
                 clickedCalendarElem = calendarInputList.find { it.day == day }
                 dayState = day
             },
@@ -78,74 +85,56 @@ fun Cal() {
     }
 }
 
-
-private fun createCalendarList(): List<CalendarInput> {
-    val calendarInputs = mutableListOf<CalendarInput>()
-    // calendar
-    val calendar = Calendar.getInstance()
-    val month = calendar.get(Calendar.MONTH)
-    val year = calendar.get(Calendar.YEAR)
-    calendar.set(Calendar.MONTH, month)
-    val numberOfDaysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-    calendar[Calendar.YEAR] = year
-    calendar[Calendar.MONTH] = month
-    calendar[Calendar.DAY_OF_MONTH] = 1
-    // 1..7
-    val firstDayInMonthUS = calendar[Calendar.DAY_OF_WEEK] - 1
-    val firstDayInMonth = mapFrenchCalendar[firstDayInMonthUS]
-
-    // end data from api
-
-    for (j in 1 until firstDayInMonth){
-        calendarInputs.add(CalendarInput(Day(0,0,0, listOf(firstDayInMonth.toString()))))
-    }
-    for (i in 1..numberOfDaysInMonth) {
-        calendarInputs.add(
-            CalendarInput(
-                Day(year,month,i, listOf(allDaysFR[firstDayInMonth])),
-            )
-        )
-    }
-    return calendarInputs
-}
-
-
-
-private const val CALENDAR_ROWS = 5
-private const val CALENDAR_COLUMNS = 7
-
 @Composable
 fun Calendar(
     modifier: Modifier = Modifier,
-    calendarInput: List<CalendarInput>,
+    onMonthAndYearClick: (List<CalendarInput>) -> Unit,
+    //calendarInput: List<CalendarInput>,
     onDayClick:(Day)->Unit,
     strokeWidth:Float = 5f,
     titleDate:String
 ) {
-
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
     }
     var clickAnimationOffset by remember {
         mutableStateOf(Offset.Zero)
     }
-
     var animationRadius by remember {
         mutableStateOf(0f)
     }
-
+    var calendarInputList by remember {
+        mutableStateOf(currentDateConfiguration())
+    }
     val scope = rememberCoroutineScope()
-
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        IconButton(onClick = {
+            calendarInputList = nextCurrentDateConfiguration()
+            onMonthAndYearClick(calendarInputList)
+        }) {
+            Icon(
+                painter = painterResource(R.drawable.next),
+                contentDescription = stringResource(id = R.string.title_activity_ng_calendar_main)
+            )
+        }
         Text(
             text = titleDate,
             fontWeight = FontWeight.SemiBold,
             color = white,
             fontSize = 20.sp
         )
+        IconButton(onClick = {
+            calendarInputList = previousCurrentDateConfiguration()
+            onMonthAndYearClick(calendarInputList)
+        }) {
+            Icon(
+                painter = painterResource(R.drawable.previous),
+                contentDescription = stringResource(id = R.string.title_activity_ng_calendar_main)
+            )
+        }
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -159,8 +148,8 @@ fun Calendar(
                             find the clicked day the belong to canvas
                              */
                             val indexDay = (column - 1) + (row - 1) * CALENDAR_COLUMNS
-                            val selectedDay = calendarInput[indexDay]
-                            if (selectedDay.day.day <= calendarInput.size) {
+                            val selectedDay = calendarInputList[indexDay]
+                            if (selectedDay.day.day <= calendarInputList.size) {
                                 onDayClick(selectedDay.day)
                                 clickAnimationOffset = offset
                                 scope.launch {
@@ -236,12 +225,12 @@ fun Calendar(
             /*
             display days
              */
-            for(i in calendarInput.indices){
+            for(i in calendarInputList.indices){
                 val textPositionX = xSteps * (i% CALENDAR_COLUMNS) + strokeWidth
                 val textPositionY = (i / CALENDAR_COLUMNS) * ySteps + textHeight + strokeWidth/2
                 drawContext.canvas.nativeCanvas.apply {
                     drawText(
-                        if(calendarInput[i].day.day==0) "" else calendarInput[i].day.day.toString(),
+                        if(calendarInputList[i].day.day==0) "" else calendarInputList[i].day.day.toString(),
                         textPositionX,
                         textPositionY,
                         Paint().apply {
@@ -254,7 +243,83 @@ fun Calendar(
             }
         }
     }
+}
 
+// current date
+data class CurrentDate(val month : Int,val year : Int)
+var current = CurrentDate(1,1)
+fun currentDateConfiguration(): List<CalendarInput>{
+    val calendar = Calendar.getInstance()
+    val month = calendar.get(Calendar.MONTH)
+    val year = calendar.get(Calendar.YEAR)
+    current = CurrentDate(month,year)
+    return createCalendarList(month,year)
+}
+// current selected date + 1 month
+fun nextCurrentDateConfiguration(): List<CalendarInput>{
+    current = if(isTheLastMonthOfYear()){
+        CurrentDate(1,current.year+1)
+    }else{
+        CurrentDate(current.month+1,current.year)
+    }
+    return createCalendarList(current.month,current.year)
+}
+
+fun isTheLastMonthOfYear(): Boolean{
+    if(current.month==12){
+        return true
+    }
+    return false
+}
+
+fun isTheFistMonthOfYear(): Boolean{
+    if(current.month==1){
+        return true
+    }
+    return false
+}
+
+fun previousCurrentDateConfiguration(): List<CalendarInput>{
+    current = if(isTheFistMonthOfYear()){
+        CurrentDate(12,current.year-1)
+    }else{
+        CurrentDate(current.month-1,current.year)
+    }
+    return createCalendarList(current.month,current.year)
+}
+
+fun getNumberDaysByMonth(month : Int, year : Int): Int{
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.MONTH, month)
+    calendar.set(Calendar.YEAR, year)
+    return calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+}
+
+private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
+    val calendarInputs = mutableListOf<CalendarInput>()
+    // calendar
+    val calendar = Calendar.getInstance()
+    val numberOfDaysInMonth = getNumberDaysByMonth(month, year)
+    calendar[Calendar.YEAR] = year
+    calendar[Calendar.MONTH] = month
+    calendar[Calendar.DAY_OF_MONTH] = 1
+    // 1..7
+    val firstDayInMonthUS = calendar[Calendar.DAY_OF_WEEK] - 1
+    val firstDayInMonth = mapFrenchCalendar[firstDayInMonthUS]
+
+    // end data from api
+
+    for (j in 1 until firstDayInMonth){
+        calendarInputs.add(CalendarInput(Day(0,0,0, listOf(""))))
+    }
+    for (i in 1..numberOfDaysInMonth) {
+        calendarInputs.add(
+            CalendarInput(
+                Day(year,month,i, listOf("")),
+            )
+        )
+    }
+    return calendarInputs
 }
 
 class Day( val year: Int, val month : Int,val day : Int,val hours: List<String>){
@@ -275,3 +340,9 @@ class Day( val year: Int, val month : Int,val day : Int,val hours: List<String>)
 data class CalendarInput(
     val day : Day,
 )
+
+/*
+TODO detect number of row
+ */
+private const val CALENDAR_ROWS = 5
+private const val CALENDAR_COLUMNS = 7
