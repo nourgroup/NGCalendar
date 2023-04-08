@@ -59,6 +59,10 @@ fun Cal() {
             //calendarInput = calendarInputList,
             onMonthAndYearClick = {
                 calendarInputList = it
+                // TODO find other solution
+                //  now we can just take seventh element to display month and year.
+                // good to know that we put 0,0,0 in the begin of canvas to say the first day in which day so , seventh element should be at least contain year/month/day
+                dayState = Day(it[7].day.year,it[15].day.month,it[15].day.day, listOf())
             },
             onDayClick = { day ->
                 Log.i("test_calendar", "${day.year}/${day.month}/${day.day}")
@@ -108,141 +112,155 @@ fun Calendar(
     }
     val scope = rememberCoroutineScope()
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        IconButton(onClick = {
-            calendarInputList = nextCurrentDateConfiguration()
-            onMonthAndYearClick(calendarInputList)
-        }) {
-            Icon(
-                painter = painterResource(R.drawable.next),
-                contentDescription = stringResource(id = R.string.title_activity_ng_calendar_main)
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.End
+    ){
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Top
+        ) {
+            IconButton(onClick = {
+                calendarInputList = previousCurrentDateConfiguration()
+                onMonthAndYearClick(calendarInputList)
+            }) {
+                Icon(
+                    painter = painterResource(R.drawable.previous),
+                    contentDescription = stringResource(id = R.string.title_activity_ng_calendar_main)
+                )
+            }
+            Text(
+                text = titleDate,
+                fontWeight = FontWeight.SemiBold,
+                color = white,
+                fontSize = 20.sp
             )
+            IconButton(onClick = {
+                calendarInputList = nextCurrentDateConfiguration()
+                onMonthAndYearClick(calendarInputList)
+            }) {
+                Icon(
+                    painter = painterResource(R.drawable.next),
+                    contentDescription = stringResource(id = R.string.title_activity_ng_calendar_main)
+                )
+            }
+
         }
-        Text(
-            text = titleDate,
-            fontWeight = FontWeight.SemiBold,
-            color = white,
-            fontSize = 20.sp
-        )
-        IconButton(onClick = {
-            calendarInputList = previousCurrentDateConfiguration()
-            onMonthAndYearClick(calendarInputList)
-        }) {
-            Icon(
-                painter = painterResource(R.drawable.previous),
-                contentDescription = stringResource(id = R.string.title_activity_ng_calendar_main)
-            )
-        }
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(true) {
-                    detectTapGestures(
-                        onTap = { offset ->
-                            val column =
-                                (offset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
-                            val row = (offset.y / canvasSize.height * CALENDAR_ROWS).toInt() + 1
-                            /*
-                            find the clicked day the belong to canvas
-                             */
-                            val indexDay = (column - 1) + (row - 1) * CALENDAR_COLUMNS
-                            val selectedDay = calendarInputList[indexDay]
-                            if (selectedDay.day.day <= calendarInputList.size) {
-                                onDayClick(selectedDay.day)
-                                clickAnimationOffset = offset
-                                scope.launch {
-                                    animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
-                                        animationRadius = value
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(true) {
+                        detectTapGestures(
+                            onTap = { offset ->
+                                val column =
+                                    (offset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
+                                val row = (offset.y / canvasSize.height * CALENDAR_ROWS).toInt() + 1
+                                /*
+                                find the clicked day the belong to canvas
+                                 */
+                                val indexDay = (column - 1) + (row - 1) * CALENDAR_COLUMNS
+                                val selectedDay = calendarInputList[indexDay]
+                                if (selectedDay.day.day <= calendarInputList.size) {
+                                    onDayClick(selectedDay.day)
+                                    clickAnimationOffset = offset
+                                    scope.launch {
+                                        animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
+                                            animationRadius = value
+                                        }
                                     }
                                 }
-                            }
 
-                        }
+                            }
+                        )
+                    }
+            ){
+                val canvasHeight = size.height
+                val canvasWidth = size.width
+                canvasSize = Size(canvasWidth,canvasHeight)
+                val ySteps = canvasHeight/ CALENDAR_ROWS
+                val xSteps = canvasWidth/ CALENDAR_COLUMNS
+
+                val column = (clickAnimationOffset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
+                val row = (clickAnimationOffset.y / canvasSize.height * CALENDAR_ROWS).toInt() + 1
+
+                val path = Path().apply {
+                    moveTo((column-1)*xSteps,(row-1)*ySteps)
+                    lineTo(column*xSteps,(row-1)*ySteps)
+                    lineTo(column*xSteps,row*ySteps)
+                    lineTo((column-1)*xSteps,row*ySteps)
+                    close()
+                }
+
+                clipPath(path){
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            listOf(orange.copy(0.8f), orange.copy(0.2f)),
+                            center = clickAnimationOffset,
+                            radius = animationRadius + 0.1f
+                        ),
+                        radius = animationRadius + 0.1f,
+                        center = clickAnimationOffset
                     )
                 }
-        ){
-            val canvasHeight = size.height
-            val canvasWidth = size.width
-            canvasSize = Size(canvasWidth,canvasHeight)
-            val ySteps = canvasHeight/ CALENDAR_ROWS
-            val xSteps = canvasWidth/ CALENDAR_COLUMNS
 
-            val column = (clickAnimationOffset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
-            val row = (clickAnimationOffset.y / canvasSize.height * CALENDAR_ROWS).toInt() + 1
-
-            val path = Path().apply {
-                moveTo((column-1)*xSteps,(row-1)*ySteps)
-                lineTo(column*xSteps,(row-1)*ySteps)
-                lineTo(column*xSteps,row*ySteps)
-                lineTo((column-1)*xSteps,row*ySteps)
-                close()
-            }
-
-            clipPath(path){
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(orange.copy(0.8f), orange.copy(0.2f)),
-                        center = clickAnimationOffset,
-                        radius = animationRadius + 0.1f
-                    ),
-                    radius = animationRadius + 0.1f,
-                    center = clickAnimationOffset
-                )
-            }
-
-            drawRoundRect(
-                orange,
-                cornerRadius = CornerRadius(5f,5f),
-                style = Stroke(
-                    width = strokeWidth
-                )
-            )
-            /*
-            draw lines for row
-             */
-            for(i in 1 until CALENDAR_ROWS){
-                drawLine(
-                    color = orange,
-                    start = Offset(0f,ySteps*i),
-                    end = Offset(canvasWidth, ySteps*i),
-                    strokeWidth = strokeWidth
-                )
-            }
-            /*
-            draw lines for column
-             */
-            for(i in 1 until CALENDAR_COLUMNS){
-                drawLine(
-                    color = orange,
-                    start = Offset(xSteps*i,0f),
-                    end = Offset(xSteps*i, canvasHeight),
-                    strokeWidth = strokeWidth
-                )
-            }
-            val textHeight = 17.dp.toPx()
-            /*
-            display days
-             */
-            for(i in calendarInputList.indices){
-                val textPositionX = xSteps * (i% CALENDAR_COLUMNS) + strokeWidth
-                val textPositionY = (i / CALENDAR_COLUMNS) * ySteps + textHeight + strokeWidth/2
-                drawContext.canvas.nativeCanvas.apply {
-                    drawText(
-                        if(calendarInputList[i].day.day==0) "" else calendarInputList[i].day.day.toString(),
-                        textPositionX,
-                        textPositionY,
-                        Paint().apply {
-                            textSize = textHeight
-                            color = white.toArgb()
-                            isFakeBoldText = true
-                        }
+                drawRoundRect(
+                    orange,
+                    cornerRadius = CornerRadius(5f,5f),
+                    style = Stroke(
+                        width = strokeWidth
                     )
+                )
+                /*
+                draw lines for row
+                 */
+                for(i in 1 until CALENDAR_ROWS){
+                    drawLine(
+                        color = orange,
+                        start = Offset(0f,ySteps*i),
+                        end = Offset(canvasWidth, ySteps*i),
+                        strokeWidth = strokeWidth
+                    )
+                }
+                /*
+                draw lines for column
+                 */
+                for(i in 1 until CALENDAR_COLUMNS){
+                    drawLine(
+                        color = orange,
+                        start = Offset(xSteps*i,0f),
+                        end = Offset(xSteps*i, canvasHeight),
+                        strokeWidth = strokeWidth
+                    )
+                }
+                val textHeight = 17.dp.toPx()
+                /*
+                display days
+                 */
+                for(i in calendarInputList.indices){
+                    val textPositionX = xSteps * (i% CALENDAR_COLUMNS) + strokeWidth
+                    val textPositionY = (i / CALENDAR_COLUMNS) * ySteps + textHeight + strokeWidth/2
+                    drawContext.canvas.nativeCanvas.apply {
+                        drawText(
+                            if(calendarInputList[i].day.day==0) "" else calendarInputList[i].day.day.toString(),
+                            textPositionX,
+                            textPositionY,
+                            Paint().apply {
+                                textSize = textHeight
+                                color = white.toArgb()
+                                isFakeBoldText = true
+                            }
+                        )
+                    }
                 }
             }
         }
     }
+
 }
 
 // current date
