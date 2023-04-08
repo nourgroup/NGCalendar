@@ -39,7 +39,7 @@ private val allDaysFR = listOf( "Lun", "Mar", "Mer", "Jeu", "Ven", "sam","Dim" )
 private val mapFrenchCalendar = listOf( 7,1,2,3,4,5,6)
 
 @Composable
-fun Cal() {
+fun Cal(listenerClickDay : (Day) -> Unit) {
     var calendarInputList by remember {
         mutableStateOf(currentDateConfiguration())
     }
@@ -51,8 +51,9 @@ fun Cal() {
     }
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(gray),
+            .fillMaxWidth()
+            .height(200.dp)
+            .background(nightDark),
         contentAlignment = Alignment.TopCenter
     ) {
         Calendar(
@@ -66,9 +67,13 @@ fun Cal() {
                 CalendarStatic.CALENDAR_ROWS = detectNumberOfRow(calendarInputList)
             },
             onDayClick = { day ->
+                /*
+                TODO return the correct month not month -1
+                 */
                 Log.i("test_calendar", "${day.year}/${day.month}/${day.day}")
                 clickedCalendarElem = calendarInputList.find { it.day == day }
                 dayState = day
+                listenerClickDay(day)
             },
             titleDate = "${dayState?.month?.plus(1)}/${dayState?.year}",
             modifier = Modifier
@@ -76,17 +81,6 @@ fun Cal() {
                 .fillMaxWidth()
                 .aspectRatio(1.3f)
         )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-                .align(Alignment.Center)
-        ) {
-            Text(text = "${clickedCalendarElem?.day?.day}/${clickedCalendarElem?.day?.month?.plus(1)}/${clickedCalendarElem?.day?.year}")
-            clickedCalendarElem?.day?.hours?.forEach {
-                Text("$it")
-            }
-        }
     }
 }
 
@@ -160,7 +154,8 @@ fun Calendar(
                             onTap = { offset ->
                                 val column =
                                     (offset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
-                                val row = (offset.y / canvasSize.height * CalendarStatic.CALENDAR_ROWS).toInt() + 1
+                                val row =
+                                    (offset.y / canvasSize.height * CalendarStatic.CALENDAR_ROWS).toInt() + 1
                                 /*
                                 find the clicked day the belong to canvas
                                  */
@@ -326,11 +321,12 @@ private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
     val firstDayInMonthUS = calendar[Calendar.DAY_OF_WEEK] - 1
     val firstDayInMonth = mapFrenchCalendar[firstDayInMonthUS]
 
-    // end data from api
-
-    for (j in 1 until firstDayInMonth){
+    // begin data from API
+    // fill all days with 0 until the first day in month
+    repeat(  firstDayInMonth - 1){
         calendarInputs.add(CalendarInput(Day(0,0,0, listOf(""))))
     }
+    // fill the calendar
     for (i in 1..numberOfDaysInMonth) {
         calendarInputs.add(
             CalendarInput(
@@ -353,7 +349,7 @@ class Day( val year: Int, val month : Int,val day : Int,val hours: List<String>)
     }
 
     override fun toString(): String {
-        return super.toString()
+        return "$year/$month/$day"
     }
 }
 data class CalendarInput(
