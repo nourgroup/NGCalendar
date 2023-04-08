@@ -62,7 +62,8 @@ fun Cal() {
                 // TODO find other solution
                 //  now we can just take seventh element to display month and year.
                 // good to know that we put 0,0,0 in the begin of canvas to say the first day in which day so , seventh element should be at least contain year/month/day
-                dayState = Day(it[7].day.year,it[15].day.month,it[15].day.day, listOf())
+                dayState = Day(it[7].day.year,it[7].day.month,it[7].day.day, listOf())
+                CalendarStatic.CALENDAR_ROWS = detectNumberOfRow(calendarInputList)
             },
             onDayClick = { day ->
                 Log.i("test_calendar", "${day.year}/${day.month}/${day.day}")
@@ -81,7 +82,7 @@ fun Cal() {
                 .padding(10.dp)
                 .align(Alignment.Center)
         ) {
-            Text(text = "${clickedCalendarElem?.day?.day}/${clickedCalendarElem?.day?.month}/${clickedCalendarElem?.day?.year}")
+            Text(text = "${clickedCalendarElem?.day?.day}/${clickedCalendarElem?.day?.month?.plus(1)}/${clickedCalendarElem?.day?.year}")
             clickedCalendarElem?.day?.hours?.forEach {
                 Text("$it")
             }
@@ -159,7 +160,7 @@ fun Calendar(
                             onTap = { offset ->
                                 val column =
                                     (offset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
-                                val row = (offset.y / canvasSize.height * CALENDAR_ROWS).toInt() + 1
+                                val row = (offset.y / canvasSize.height * CalendarStatic.CALENDAR_ROWS).toInt() + 1
                                 /*
                                 find the clicked day the belong to canvas
                                  */
@@ -182,11 +183,11 @@ fun Calendar(
                 val canvasHeight = size.height
                 val canvasWidth = size.width
                 canvasSize = Size(canvasWidth,canvasHeight)
-                val ySteps = canvasHeight/ CALENDAR_ROWS
+                val ySteps = canvasHeight/ CalendarStatic.CALENDAR_ROWS
                 val xSteps = canvasWidth/ CALENDAR_COLUMNS
 
                 val column = (clickAnimationOffset.x / canvasSize.width * CALENDAR_COLUMNS).toInt() + 1
-                val row = (clickAnimationOffset.y / canvasSize.height * CALENDAR_ROWS).toInt() + 1
+                val row = (clickAnimationOffset.y / canvasSize.height * CalendarStatic.CALENDAR_ROWS).toInt() + 1
 
                 val path = Path().apply {
                     moveTo((column-1)*xSteps,(row-1)*ySteps)
@@ -218,7 +219,7 @@ fun Calendar(
                 /*
                 draw lines for row
                  */
-                for(i in 1 until CALENDAR_ROWS){
+                for(i in 1 until CalendarStatic.CALENDAR_ROWS){
                     drawLine(
                         color = orange,
                         start = Offset(0f,ySteps*i),
@@ -359,8 +360,20 @@ data class CalendarInput(
     val day : Day,
 )
 
+/**
+ * number of row for the calendar
+ */
+fun detectNumberOfRow(listDay : List<CalendarInput>) : Int{
+    var res = listDay.size / 7
+    if((listDay.size % 7)!=0){
+        res++
+    }
+    return res
+}
+object CalendarStatic{
+    var CALENDAR_ROWS = 5
+}
 /*
 TODO detect number of row
  */
-private const val CALENDAR_ROWS = 5
 private const val CALENDAR_COLUMNS = 7
