@@ -18,15 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ngplus.consumengcalendar.ui.theme.ConsumeNGCalendarTheme
-import com.ngplus.ngcalendar.ui.theme.Cal
-import com.ngplus.ngcalendar.ui.theme.Day
+import com.ngplus.ngcalendar.Cal
+import com.ngplus.ngcalendar.Day
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            var day = remember{
+            val day = remember{
                 mutableStateOf(Day(1,1,1, listOf("")))
             }
             ConsumeNGCalendarTheme {
@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Text(text = "${day.value.year}/${day.value.month.plus(1)}/${day.value.day}")
                         day.value.hours.forEach {
-                            Text("$it")
+                            Text(it)
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-package com.ngplus.ngcalendar.ui.theme
+package com.ngplus.ngcalendar
 
 import android.graphics.Paint
 import android.util.Log
@@ -29,8 +29,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ngplus.ngcalendar.DAY
-import com.ngplus.ngcalendar.R
+import com.ngplus.ngcalendar.ui.theme.nightDark
+import com.ngplus.ngcalendar.ui.theme.orange
+import com.ngplus.ngcalendar.ui.theme.white
+import com.ngplus.ngcalendar.ui.theme.whiteGray
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -438,7 +440,5 @@ fun getAcceptedDays(day: DAY): Day{
     }
     return processDay
 }
-/*
-TODO detect number of row
- */
+
 private const val CALENDAR_COLUMNS = 7
