@@ -36,7 +36,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     // TODO lib return month-1 ,user have to add one to the month
-                    Cal{
+                    // DAY.TODAY is by default
+                    Cal(endFilterDAY = Day(2023,7,1, listOf())){
                         day.value = it
                         Log.i("test_calendar","MainActivity $it")
                     }
@@ -61,8 +62,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DefaultPreview() {
     ConsumeNGCalendarTheme {
-        Cal{
-
+        Cal(
+            endFilterDAY = Day(2023,5,1, listOf())
+        ){
         }
     }
 }

@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ngplus.ngcalendar.DAY
 import com.ngplus.ngcalendar.R
 import kotlinx.coroutines.launch
 import java.util.*
@@ -38,8 +39,17 @@ private val allDaysUS = listOf( "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "F
 private val allDaysFR = listOf( "Lun", "Mar", "Mer", "Jeu", "Ven", "sam","Dim" )
 private val mapFrenchCalendar = listOf( 7,1,2,3,4,5,6)
 
+/*
+TODO
+ days that user can't select should be written in gray
+ and not be selected
+ */
 @Composable
-fun Cal(listenerClickDay : (Day) -> Unit) {
+fun Cal(
+    startFilterDAY : DAY = DAY.ALL,
+    endFilterDAY : Day,
+    listenerClickDay : (Day) -> Unit
+) {
     var calendarInputList by remember {
         mutableStateOf(currentDateConfiguration())
     }
@@ -57,7 +67,8 @@ fun Cal(listenerClickDay : (Day) -> Unit) {
         contentAlignment = Alignment.TopCenter
     ) {
         Calendar(
-            //calendarInput = calendarInputList,
+            startFilterDAY = startFilterDAY,
+            endFilterDAY = endFilterDAY,
             onMonthAndYearClick = {
                 calendarInputList = it
                 // TODO find other solution
@@ -65,6 +76,7 @@ fun Cal(listenerClickDay : (Day) -> Unit) {
                 // good to know that we put 0,0,0 in the begin of canvas to say the first day in which day so , seventh element should be at least contain year/month/day
                 dayState = Day(it[7].day.year,it[7].day.month,it[7].day.day, listOf())
                 CalendarStatic.CALENDAR_ROWS = detectNumberOfRow(calendarInputList)
+                Log.i("test_calendar","${todayDate()}")
             },
             onDayClick = { day ->
                 /*
@@ -86,13 +98,15 @@ fun Cal(listenerClickDay : (Day) -> Unit) {
 
 @Composable
 fun Calendar(
+    startFilterDAY: DAY,
+    endFilterDAY : Day,
     modifier: Modifier = Modifier,
     onMonthAndYearClick: (List<CalendarInput>) -> Unit,
-    //calendarInput: List<CalendarInput>,
     onDayClick:(Day)->Unit,
     strokeWidth:Float = 5f,
     titleDate:String
 ) {
+    val filterDay = getAcceptedDays(startFilterDAY)
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
     }
@@ -163,13 +177,14 @@ fun Calendar(
                                 if(calendarInputList.size>indexDay){
                                     val selectedDay = calendarInputList[indexDay]
                                     if (selectedDay.day.day <= calendarInputList.size) {
-                                        // call listener
-                                        onDayClick(selectedDay.day)
-
-                                        clickAnimationOffset = offset
-                                        scope.launch {
-                                            animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
-                                                animationRadius = value
+                                        if(filterDay<selectedDay.day && endFilterDAY>=selectedDay.day){
+                                            // call listener
+                                            onDayClick(selectedDay.day)
+                                            clickAnimationOffset = offset
+                                            scope.launch {
+                                                animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
+                                                    animationRadius = value
+                                                }
                                             }
                                         }
                                     }
@@ -243,14 +258,20 @@ fun Calendar(
                 for(i in calendarInputList.indices){
                     val textPositionX = xSteps * (i% CALENDAR_COLUMNS) + strokeWidth
                     val textPositionY = (i / CALENDAR_COLUMNS) * ySteps + textHeight + strokeWidth/2
+                    // color text day, filter start, end date
                     drawContext.canvas.nativeCanvas.apply {
+                        val myColor = if(filterDay<calendarInputList[i].day && endFilterDAY>=calendarInputList[i].day){
+                            white.toArgb()
+                        }else{
+                            whiteGray.toArgb()
+                        }
                         drawText(
                             if(calendarInputList[i].day.day==0) "" else calendarInputList[i].day.day.toString(),
                             textPositionX,
                             textPositionY,
                             Paint().apply {
                                 textSize = textHeight
-                                color = white.toArgb()
+                                color = myColor
                                 isFakeBoldText = true
                             }
                         )
@@ -264,7 +285,7 @@ fun Calendar(
 
 // current date
 data class CurrentDate(val month : Int,val year : Int)
-var current = CurrentDate(1,1)
+var current = CurrentDate(0,0)
 fun currentDateConfiguration(): List<CalendarInput>{
     val calendar = Calendar.getInstance()
     val month = calendar.get(Calendar.MONTH)
@@ -340,7 +361,7 @@ private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
     return calendarInputs
 }
 
-class Day( val year: Int, val month : Int,val day : Int,val hours: List<String>){
+class Day( val year: Int, val month : Int,val day : Int,val hours: List<String>): Comparable<Day>{
     override fun equals(other: Any?): Boolean {
         //return super.equals(other)
         val day = other as Day
@@ -353,6 +374,28 @@ class Day( val year: Int, val month : Int,val day : Int,val hours: List<String>)
 
     override fun toString(): String {
         return "$year/$month/$day"
+    }
+
+    override fun compareTo(other: Day): Int {
+        if(this.year>other.year){
+            return 1
+        }else if(this.year==other.year){
+            if(this.month>other.month){
+                return 1
+            }else if(this.month==other.month){
+                if(this.day>other.day){
+                    return 1
+                }else if(this.day==other.day){
+                    return 0
+                }else{
+                    return -1
+                }
+            }else{
+                return -1
+            }
+        }else{
+            return -1
+        }
     }
 }
 data class CalendarInput(
@@ -371,6 +414,29 @@ fun detectNumberOfRow(listDay : List<CalendarInput>) : Int{
 }
 object CalendarStatic{
     var CALENDAR_ROWS = 5
+}
+
+fun todayDate() : Day{
+    val calendar = Calendar.getInstance()
+    return Day(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH), listOf())
+}
+
+fun getAcceptedDays(day: DAY): Day{
+    var processDay = todayDate()
+
+    when(day){
+        DAY.TODAY -> {
+            processDay = todayDate()
+        }
+        DAY.YESTERDAY -> {
+
+        }
+        DAY.TOMORROW -> {
+
+        }
+        else -> {}
+    }
+    return processDay
 }
 /*
 TODO detect number of row
