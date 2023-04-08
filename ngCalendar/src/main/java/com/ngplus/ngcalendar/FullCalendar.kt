@@ -160,17 +160,20 @@ fun Calendar(
                                 find the clicked day the belong to canvas
                                  */
                                 val indexDay = (column - 1) + (row - 1) * CALENDAR_COLUMNS
-                                val selectedDay = calendarInputList[indexDay]
-                                if (selectedDay.day.day <= calendarInputList.size) {
-                                    onDayClick(selectedDay.day)
-                                    clickAnimationOffset = offset
-                                    scope.launch {
-                                        animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
-                                            animationRadius = value
+                                if(calendarInputList.size>indexDay){
+                                    val selectedDay = calendarInputList[indexDay]
+                                    if (selectedDay.day.day <= calendarInputList.size) {
+                                        // call listener
+                                        onDayClick(selectedDay.day)
+
+                                        clickAnimationOffset = offset
+                                        scope.launch {
+                                            animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
+                                                animationRadius = value
+                                            }
                                         }
                                     }
                                 }
-
                             }
                         )
                     }
