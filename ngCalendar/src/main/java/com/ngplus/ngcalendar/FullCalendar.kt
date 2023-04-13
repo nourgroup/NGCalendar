@@ -47,7 +47,7 @@ TODO
  and not be selected
  */
 @Composable
-fun Cal(
+fun FullCalendar(
     startFilterDAY : ChoiceDAY = ChoiceDAY.ALL,
     endFilterDAY : DayHour? = null,
     listenerClickDay : (DayHour) -> Unit

@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ngplus.consumengcalendar.ui.theme.ConsumeNGCalendarTheme
-import com.ngplus.ngcalendar.Cal
+import com.ngplus.ngcalendar.FullCalendar
 import com.ngplus.ngcalendar.DayHour
 
 class MainActivity : ComponentActivity() {
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
                     // ALL, YESTERDAY, TODAY, TOMORROW
                     // DAY.ALL is by default
                     // endFilterDAY = Day(2023,5,30, listOf())
-                    Cal{
+                    FullCalendar{
                         day.value = it
                         Log.i("test_calendar","MainActivity $it")
                     }
@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DefaultPreview() {
     ConsumeNGCalendarTheme {
-        Cal(
+        FullCalendar(
             endFilterDAY = DayHour(2023,5,1, listOf())
         ){
         }
