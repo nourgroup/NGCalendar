@@ -1,5 +1,5 @@
 package com.ngplus.ngcalendar
 
-enum class DAY {
+enum class ChoiceDAY {
     ALL,YESTERDAY,TODAY,TOMORROW
 }

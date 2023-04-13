@@ -2,15 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <activity
-            android:name=".ui.theme.FullCalendar"
+        <!--<activity
+            android:name=".FullCalendar"
             android:exported="false"
             android:label="@string/title_activity_ng_calendar_main"
             android:theme="@style/Theme.ConsumeNGCalendar">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
-        </activity>
+        </activity>-->
     </application>
 
 </manifest>

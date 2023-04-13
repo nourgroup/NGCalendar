@@ -48,9 +48,9 @@ TODO
  */
 @Composable
 fun Cal(
-    startFilterDAY : DAY = DAY.ALL,
-    endFilterDAY : Day,
-    listenerClickDay : (Day) -> Unit
+    startFilterDAY : ChoiceDAY = ChoiceDAY.ALL,
+    endFilterDAY : DayHour? = null,
+    listenerClickDay : (DayHour) -> Unit
 ) {
     var calendarInputList by remember {
         mutableStateOf(currentDateConfiguration())
@@ -59,7 +59,7 @@ fun Cal(
         mutableStateOf<CalendarInput?>(null)
     }
     var dayState by remember {
-        mutableStateOf<Day?>(Day(1, 1, 1, listOf()))
+        mutableStateOf<DayHour?>(DayHour(1, 1, 1, listOf()))
     }
     Box(
         modifier = Modifier
@@ -76,7 +76,7 @@ fun Cal(
                 // TODO find other solution
                 //  now we can just take seventh element to display month and year.
                 // good to know that we put 0,0,0 in the begin of canvas to say the first day in which day so , seventh element should be at least contain year/month/day
-                dayState = Day(it[7].day.year,it[7].day.month,it[7].day.day, listOf())
+                dayState = DayHour(it[7].day.year,it[7].day.month,it[7].day.day, listOf())
                 CalendarStatic.CALENDAR_ROWS = detectNumberOfRow(calendarInputList)
                 Log.i("test_calendar","${todayDate()}")
             },
@@ -100,11 +100,11 @@ fun Cal(
 
 @Composable
 fun Calendar(
-    startFilterDAY: DAY,
-    endFilterDAY : Day,
+    startFilterDAY: ChoiceDAY,
+    endFilterDAY : DayHour?,
     modifier: Modifier = Modifier,
     onMonthAndYearClick: (List<CalendarInput>) -> Unit,
-    onDayClick:(Day)->Unit,
+    onDayClick:(DayHour)->Unit,
     strokeWidth:Float = 5f,
     titleDate:String
 ) {
@@ -179,16 +179,30 @@ fun Calendar(
                                 if(calendarInputList.size>indexDay){
                                     val selectedDay = calendarInputList[indexDay]
                                     if (selectedDay.day.day <= calendarInputList.size) {
-                                        if(filterDay<selectedDay.day && endFilterDAY>=selectedDay.day){
-                                            // call listener
-                                            onDayClick(selectedDay.day)
-                                            clickAnimationOffset = offset
-                                            scope.launch {
-                                                animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
-                                                    animationRadius = value
+                                        if(endFilterDAY!=null){
+                                            if(filterDay<selectedDay.day && endFilterDAY>=selectedDay.day){
+                                                // call listener
+                                                onDayClick(selectedDay.day)
+                                                clickAnimationOffset = offset
+                                                scope.launch {
+                                                    animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
+                                                        animationRadius = value
+                                                    }
+                                                }
+                                            }
+                                        }else{
+                                            if(filterDay<selectedDay.day){
+                                                // call listener
+                                                onDayClick(selectedDay.day)
+                                                clickAnimationOffset = offset
+                                                scope.launch {
+                                                    animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
+                                                        animationRadius = value
+                                                    }
                                                 }
                                             }
                                         }
+
                                     }
                                 }
                             }
@@ -262,11 +276,20 @@ fun Calendar(
                     val textPositionY = (i / CALENDAR_COLUMNS) * ySteps + textHeight + strokeWidth/2
                     // color text day, filter start, end date
                     drawContext.canvas.nativeCanvas.apply {
-                        val myColor = if(filterDay<calendarInputList[i].day && endFilterDAY>=calendarInputList[i].day){
-                            white.toArgb()
+                        val myColor = if(endFilterDAY!=null){
+                            if(filterDay<calendarInputList[i].day && endFilterDAY>=calendarInputList[i].day){
+                                white.toArgb()
+                            }else{
+                                whiteGray.toArgb()
+                            }
                         }else{
-                            whiteGray.toArgb()
+                            if(filterDay<calendarInputList[i].day){
+                                white.toArgb()
+                            }else{
+                                whiteGray.toArgb()
+                            }
                         }
+
                         drawText(
                             if(calendarInputList[i].day.day==0) "" else calendarInputList[i].day.day.toString(),
                             textPositionX,
@@ -286,7 +309,6 @@ fun Calendar(
 }
 
 // current date
-data class CurrentDate(val month : Int,val year : Int)
 var current = CurrentDate(0,0)
 fun currentDateConfiguration(): List<CalendarInput>{
     val calendar = Calendar.getInstance()
@@ -350,59 +372,18 @@ private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
     // begin data from API
     // fill all days with 0 until the first day in month
     repeat(  firstDayInMonth - 1){
-        calendarInputs.add(CalendarInput(Day(0,0,0, listOf(""))))
+        calendarInputs.add(CalendarInput(DayHour(0,0,0, listOf(""))))
     }
     // fill the calendar
     for (i in 1..numberOfDaysInMonth) {
         calendarInputs.add(
             CalendarInput(
-                Day(year,month,i, listOf("")),
+                DayHour(year,month,i, listOf("")),
             )
         )
     }
     return calendarInputs
 }
-
-class Day( val year: Int, val month : Int,val day : Int,val hours: List<String>): Comparable<Day>{
-    override fun equals(other: Any?): Boolean {
-        //return super.equals(other)
-        val day = other as Day
-        return day.day==this.day && day.month==this.month && day.year==this.year
-    }
-
-    override fun hashCode(): Int {
-        return super.hashCode()
-    }
-
-    override fun toString(): String {
-        return "$year/$month/$day"
-    }
-
-    override fun compareTo(other: Day): Int {
-        if(this.year>other.year){
-            return 1
-        }else if(this.year==other.year){
-            if(this.month>other.month){
-                return 1
-            }else if(this.month==other.month){
-                if(this.day>other.day){
-                    return 1
-                }else if(this.day==other.day){
-                    return 0
-                }else{
-                    return -1
-                }
-            }else{
-                return -1
-            }
-        }else{
-            return -1
-        }
-    }
-}
-data class CalendarInput(
-    val day : Day,
-)
 
 /**
  * number of row for the calendar
@@ -418,25 +399,27 @@ object CalendarStatic{
     var CALENDAR_ROWS = 5
 }
 
-fun todayDate() : Day{
+fun todayDate() : DayHour{
     val calendar = Calendar.getInstance()
-    return Day(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH), listOf())
+    return DayHour(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH), listOf())
 }
 
-fun getAcceptedDays(day: DAY): Day{
+fun getAcceptedDays(day: ChoiceDAY): DayHour{
     var processDay = todayDate()
 
     when(day){
-        DAY.TODAY -> {
+        ChoiceDAY.TODAY -> {
             processDay = todayDate()
         }
-        DAY.YESTERDAY -> {
+        ChoiceDAY.YESTERDAY -> {
 
         }
-        DAY.TOMORROW -> {
+        ChoiceDAY.TOMORROW -> {
 
         }
-        else -> {}
+        ChoiceDAY.ALL -> {
+            processDay = DayHour(1900,1,1, listOf())
+        }
     }
     return processDay
 }

@@ -19,15 +19,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ngplus.consumengcalendar.ui.theme.ConsumeNGCalendarTheme
 import com.ngplus.ngcalendar.Cal
-import com.ngplus.ngcalendar.Day
+import com.ngplus.ngcalendar.DayHour
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             val day = remember{
-                mutableStateOf(Day(1,1,1, listOf("")))
+                mutableStateOf(DayHour(1,1,1, listOf("")))
             }
             ConsumeNGCalendarTheme {
                 // A surface container using the 'background' color from the theme
@@ -36,8 +35,10 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     // TODO lib return month-1 ,user have to add one to the month
-                    // DAY.TODAY is by default
-                    Cal(endFilterDAY = Day(2023,7,1, listOf())){
+                    // ALL, YESTERDAY, TODAY, TOMORROW
+                    // DAY.ALL is by default
+                    // endFilterDAY = Day(2023,5,30, listOf())
+                    Cal{
                         day.value = it
                         Log.i("test_calendar","MainActivity $it")
                     }
@@ -63,7 +64,7 @@ class MainActivity : ComponentActivity() {
 fun DefaultPreview() {
     ConsumeNGCalendarTheme {
         Cal(
-            endFilterDAY = Day(2023,5,1, listOf())
+            endFilterDAY = DayHour(2023,5,1, listOf())
         ){
         }
     }
