@@ -1,9 +1,9 @@
 package com.ngplus.ngcalendar
 
-class DayHour(val year: Int, val month : Int, val day : Int, val hours: List<String>): Comparable<DayHour>{
+class FullDate(val year: Int, val month : Int, val day : Int, val hours: List<String>): Comparable<FullDate>{
     override fun equals(other: Any?): Boolean {
         //return super.equals(other)
-        val day = other as DayHour
+        val day = other as FullDate
         return day.day==this.day && day.month==this.month && day.year==this.year
     }
 
@@ -15,25 +15,25 @@ class DayHour(val year: Int, val month : Int, val day : Int, val hours: List<Str
         return "$year/$month/$day"
     }
 
-    override fun compareTo(other: DayHour): Int {
-        if(this.year>other.year){
-            return 1
+    override fun compareTo(other: FullDate): Int {
+        return if(this.year>other.year){
+             1
         }else if(this.year==other.year){
             if(this.month>other.month){
-                return 1
+               1
             }else if(this.month==other.month){
                 if(this.day>other.day){
-                    return 1
+                     1
                 }else if(this.day==other.day){
-                    return 0
+                    0
                 }else{
-                    return -1
+                    -1
                 }
             }else{
-                return -1
+                -1
             }
         }else{
-            return -1
+            -1
         }
     }
 }

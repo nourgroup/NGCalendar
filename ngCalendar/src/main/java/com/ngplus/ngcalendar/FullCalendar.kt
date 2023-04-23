@@ -49,8 +49,8 @@ TODO
 @Composable
 fun FullCalendar(
     startFilterDAY : ChoiceDAY = ChoiceDAY.ALL,
-    endFilterDAY : DayHour? = null,
-    listenerClickDay : (DayHour) -> Unit
+    endFilterDAY : FullDate? = null,
+    listenerClickDay : (FullDate) -> Unit
 ) {
     var calendarInputList by remember {
         mutableStateOf(currentDateConfiguration())
@@ -59,7 +59,7 @@ fun FullCalendar(
         mutableStateOf<CalendarInput?>(null)
     }
     var dayState by remember {
-        mutableStateOf<DayHour?>(DayHour(1, 1, 1, listOf()))
+        mutableStateOf<FullDate?>(FullDate(1, 1, 1, listOf()))
     }
     Box(
         modifier = Modifier
@@ -75,8 +75,8 @@ fun FullCalendar(
                 calendarInputList = it
                 // TODO find other solution
                 //  now we can just take seventh element to display month and year.
-                // good to know that we put 0,0,0 in the begin of canvas to say the first day in which day so , seventh element should be at least contain year/month/day
-                dayState = DayHour(it[7].day.year,it[7].day.month,it[7].day.day, listOf())
+                // good to know that we put 0,0,0 in the begin of canvas to say the first day in which day so , seventh element should be at least contain the first day of year/month
+                dayState = FullDate(it[7].day.year,it[7].day.month,it[7].day.day, listOf())
                 CalendarStatic.CALENDAR_ROWS = detectNumberOfRow(calendarInputList)
                 Log.i("test_calendar","${todayDate()}")
             },
@@ -101,10 +101,10 @@ fun FullCalendar(
 @Composable
 fun Calendar(
     startFilterDAY: ChoiceDAY,
-    endFilterDAY : DayHour?,
+    endFilterDAY : FullDate?,
     modifier: Modifier = Modifier,
     onMonthAndYearClick: (List<CalendarInput>) -> Unit,
-    onDayClick:(DayHour)->Unit,
+    onDayClick:(FullDate)->Unit,
     strokeWidth:Float = 5f,
     titleDate:String
 ) {
@@ -372,13 +372,13 @@ private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
     // begin data from API
     // fill all days with 0 until the first day in month
     repeat(  firstDayInMonth - 1){
-        calendarInputs.add(CalendarInput(DayHour(0,0,0, listOf(""))))
+        calendarInputs.add(CalendarInput(FullDate(0,0,0, listOf(""))))
     }
     // fill the calendar
     for (i in 1..numberOfDaysInMonth) {
         calendarInputs.add(
             CalendarInput(
-                DayHour(year,month,i, listOf("")),
+                FullDate(year,month,i, listOf("")),
             )
         )
     }
@@ -386,7 +386,8 @@ private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
 }
 
 /**
- * number of row for the calendar
+ * number of row for the calendar to be drawn
+ * @listDay contain all days plus
  */
 fun detectNumberOfRow(listDay : List<CalendarInput>) : Int{
     var res = listDay.size / 7
@@ -395,33 +396,44 @@ fun detectNumberOfRow(listDay : List<CalendarInput>) : Int{
     }
     return res
 }
+
+// by default
 object CalendarStatic{
     var CALENDAR_ROWS = 5
 }
 
-fun todayDate() : DayHour{
-    val calendar = Calendar.getInstance()
-    return DayHour(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH), listOf())
-}
-
-fun getAcceptedDays(day: ChoiceDAY): DayHour{
+fun getAcceptedDays(day: ChoiceDAY = ChoiceDAY.TODAY): FullDate{
     var processDay = todayDate()
-
-    when(day){
+    processDay = when(day){
         ChoiceDAY.TODAY -> {
-            processDay = todayDate()
+            todayDate()
         }
         ChoiceDAY.YESTERDAY -> {
-
+            getYesterdayDate(processDay)
         }
         ChoiceDAY.TOMORROW -> {
-
+            getTomorrowDate(processDay)
         }
         ChoiceDAY.ALL -> {
-            processDay = DayHour(1900,1,1, listOf())
+            FullDate(1900,1,1, listOf())
         }
     }
     return processDay
+}
+
+fun todayDate() : FullDate{
+    val calendar = Calendar.getInstance()
+    return FullDate(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH), listOf())
+}
+
+fun getTomorrowDate(processDay: FullDate): FullDate {
+    // year + month + day
+    TODO()
+}
+
+fun getYesterdayDate(processDay : FullDate): FullDate {
+    //
+    TODO()
 }
 
 private const val CALENDAR_COLUMNS = 7
