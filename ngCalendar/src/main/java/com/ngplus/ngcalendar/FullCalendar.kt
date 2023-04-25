@@ -338,9 +338,9 @@ var current = CurrentDate(0,0)
 fun currentDateConfiguration(): List<CalendarInput>{
     val calendar = Calendar.getInstance()
     /**
-     * todo month + 1 ?
+     * todo month as it is
      */
-    val month = calendar.get(Calendar.MONTH)+1
+    val month = calendar.get(Calendar.MONTH)
     val year = calendar.get(Calendar.YEAR)
     current = CurrentDate(month,year)
     return createCalendarList(month,year)
@@ -355,15 +355,18 @@ fun nextCurrentDateConfiguration(): List<CalendarInput>{
     return createCalendarList(current.month,current.year)
 }
 
+/**
+ * design pattern
+ */
 fun isTheLastMonthOfYear(): Boolean{
-    if(current.month==12){
+    if(current.month==11){
         return true
     }
     return false
 }
 
 fun isTheFistMonthOfYear(): Boolean{
-    if(current.month==1){
+    if(current.month==0){
         return true
     }
     return false
@@ -371,7 +374,7 @@ fun isTheFistMonthOfYear(): Boolean{
 
 fun previousCurrentDateConfiguration(): List<CalendarInput>{
     current = if(isTheFistMonthOfYear()){
-        CurrentDate(12,current.year-1)
+        CurrentDate(11,current.year-1)
     }else{
         CurrentDate(current.month-1,current.year)
     }
@@ -380,6 +383,9 @@ fun previousCurrentDateConfiguration(): List<CalendarInput>{
 
 fun getNumberDaysByMonth(month : Int, year : Int): Int{
     val calendar = Calendar.getInstance()
+    /**
+     * todo month - 1
+     */
     calendar.set(Calendar.MONTH, month)
     calendar.set(Calendar.YEAR, year)
     return calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -454,7 +460,7 @@ object CalendarStatic{
 
 fun todayDate() : FullDate{
     val calendar = Calendar.getInstance()
-    return FullDate(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH)+1,calendar.get(Calendar.DAY_OF_MONTH), listOf())
+    return FullDate(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH), listOf())
 }
 
 /*fun getTomorrowDate(processDay: FullDate): FullDate {
