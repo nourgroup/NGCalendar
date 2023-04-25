@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
                     // ALL, YESTERDAY, TODAY, TOMORROW
                     // DAY.ALL is by default
                     // endFilterDAY = Day(2023,5,30, listOf())
-                    FullCalendar{
+                    FullCalendar(0,10){
                         day.value = it
                         Log.i("test_calendar","MainActivity $it")
                     }
@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxWidth()
                             .padding(10.dp)
                     ) {
-                        Text(text = "${day.value.year}/${day.value.month.plus(1)}/${day.value.day}")
+                        Text(text = "${day.value.year}/${day.value.month}/${day.value.day}")
                         day.value.hours.forEach {
                             Text(it)
                         }
@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
 fun DefaultPreview() {
     ConsumeNGCalendarTheme {
         FullCalendar(
-            endFilterDAY = FullDate(2023,5,1, listOf())
+            2,20
         ){
         }
     }

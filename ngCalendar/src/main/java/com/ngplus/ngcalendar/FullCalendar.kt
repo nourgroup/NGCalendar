@@ -39,7 +39,7 @@ import java.util.*
 
 private val allDaysUS = listOf( "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY","SUNDAY" )
 private val allDaysFR = listOf( "Lun", "Mar", "Mer", "Jeu", "Ven", "sam","Dim" )
-private val mapFrenchCalendar = listOf( 7,1,2,3,4,5,6)
+private val mapFrenchCalendar = listOf(7,1,2,3,4,5,6)
 
 /*
 TODO
@@ -48,8 +48,8 @@ TODO
  */
 @Composable
 fun FullCalendar(
-    startFilterDAY : ChoiceDAY = ChoiceDAY.ALL,
-    endFilterDAY : FullDate? = null,
+    numberOfDayBeforeCurrentDate : Int,
+    numberOfDayAfterCurrentDate : Int,
     listenerClickDay : (FullDate) -> Unit
 ) {
     var calendarInputList by remember {
@@ -59,7 +59,7 @@ fun FullCalendar(
         mutableStateOf<CalendarInput?>(null)
     }
     var dayState by remember {
-        mutableStateOf<FullDate?>(FullDate(1, 1, 1, listOf()))
+        mutableStateOf<FullDate?>(FullDate(1900, 1, 1, listOf()))
     }
     Box(
         modifier = Modifier
@@ -69,8 +69,8 @@ fun FullCalendar(
         contentAlignment = Alignment.TopCenter
     ) {
         Calendar(
-            startFilterDAY = startFilterDAY,
-            endFilterDAY = endFilterDAY,
+            numberOfDayBeforeCurrentDate = numberOfDayBeforeCurrentDate,
+            numberOfDayAfterCurrentDate = numberOfDayAfterCurrentDate,
             onMonthAndYearClick = {
                 calendarInputList = it
                 // TODO find other solution
@@ -82,14 +82,14 @@ fun FullCalendar(
             },
             onDayClick = { day ->
                 /*
-                TODO return the correct month not month -1
+                TODO return the correct month not (month-1)
                  */
                 Log.i("test_calendar", "${day.year}/${day.month}/${day.day}")
                 clickedCalendarElem = calendarInputList.find { it.day == day }
                 dayState = day
                 listenerClickDay(day)
             },
-            titleDate = "${dayState?.month?.plus(1)}/${dayState?.year}",
+            titleDate = "${dayState?.month}/${dayState?.year}",
             modifier = Modifier
                 .padding(10.dp)
                 .fillMaxWidth()
@@ -100,15 +100,16 @@ fun FullCalendar(
 
 @Composable
 fun Calendar(
-    startFilterDAY: ChoiceDAY,
-    endFilterDAY : FullDate?,
+    numberOfDayBeforeCurrentDate : Int,
+    numberOfDayAfterCurrentDate: Int,
     modifier: Modifier = Modifier,
     onMonthAndYearClick: (List<CalendarInput>) -> Unit,
     onDayClick:(FullDate)->Unit,
     strokeWidth:Float = 5f,
     titleDate:String
 ) {
-    val filterDay = getAcceptedDays(startFilterDAY)
+    val startFilterDAY = getDateByAddingNumberOfDaysToCurrentDate(todayDate(),numberOfDayBeforeCurrentDate)
+    val endFilterDAY = getDateByAddingNumberOfDaysToCurrentDate(todayDate(),numberOfDayAfterCurrentDate)
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
     }
@@ -179,30 +180,16 @@ fun Calendar(
                                 if(calendarInputList.size>indexDay){
                                     val selectedDay = calendarInputList[indexDay]
                                     if (selectedDay.day.day <= calendarInputList.size) {
-                                        if(endFilterDAY!=null){
-                                            if(filterDay<selectedDay.day && endFilterDAY>=selectedDay.day){
-                                                // call listener
-                                                onDayClick(selectedDay.day)
-                                                clickAnimationOffset = offset
-                                                scope.launch {
-                                                    animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
-                                                        animationRadius = value
-                                                    }
-                                                }
-                                            }
-                                        }else{
-                                            if(filterDay<selectedDay.day){
-                                                // call listener
-                                                onDayClick(selectedDay.day)
-                                                clickAnimationOffset = offset
-                                                scope.launch {
-                                                    animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
-                                                        animationRadius = value
-                                                    }
+                                        if(selectedDay.day in startFilterDAY..endFilterDAY){
+                                            // call listener
+                                            onDayClick(selectedDay.day)
+                                            clickAnimationOffset = offset
+                                            scope.launch {
+                                                animate(0f, 225f, animationSpec = tween(300)) { value, _ ->
+                                                    animationRadius = value
                                                 }
                                             }
                                         }
-
                                     }
                                 }
                             }
@@ -269,28 +256,20 @@ fun Calendar(
                 }
                 val textHeight = 17.dp.toPx()
                 /*
-                display days
+                display days, white disabled day
                  */
                 for(i in calendarInputList.indices){
                     val textPositionX = xSteps * (i% CALENDAR_COLUMNS) + strokeWidth
                     val textPositionY = (i / CALENDAR_COLUMNS) * ySteps + textHeight + strokeWidth/2
                     // color text day, filter start, end date
                     drawContext.canvas.nativeCanvas.apply {
-                        val myColor = if(endFilterDAY!=null){
-                            if(filterDay<calendarInputList[i].day && endFilterDAY>=calendarInputList[i].day){
+                        val myColor = if(calendarInputList[i].day in startFilterDAY..endFilterDAY){
                                 white.toArgb()
                             }else{
                                 whiteGray.toArgb()
                             }
-                        }else{
-                            if(filterDay<calendarInputList[i].day){
-                                white.toArgb()
-                            }else{
-                                whiteGray.toArgb()
-                            }
-                        }
-
                         drawText(
+                            // put 0 in the beginning of a calender
                             if(calendarInputList[i].day.day==0) "" else calendarInputList[i].day.day.toString(),
                             textPositionX,
                             textPositionY,
@@ -308,11 +287,60 @@ fun Calendar(
 
 }
 
+fun getDateByAddingNumberOfDaysToCurrentDate(fullDate: FullDate, numberDays : Int): FullDate{
+    return if(numberDays==0){
+        fullDate
+    }else if(numberDays>0){
+        getDirectNextDate(fullDate,numberDays)
+    }else{
+        getDirectPreviousDate(fullDate,numberDays)
+    }
+}
+
+fun getDirectNextDate(fullDate: FullDate, numberDays : Int) : FullDate{
+    val numberOfDayPerYearAndMonth = getNumberDaysByMonth(fullDate.month,fullDate.year)
+    val a = if(numberOfDayPerYearAndMonth > fullDate.day){
+         FullDate(fullDate.year,fullDate.month,fullDate.day+1, listOf())
+    }else{
+        if(fullDate.month==12){
+            FullDate(fullDate.year+1,1,1, listOf())
+        }else{
+            FullDate(fullDate.year,fullDate.month+1,1, listOf())
+        }
+    }
+    return if(numberDays>=2){
+        getDirectNextDate(a,numberDays - 1)
+    }else{
+        a
+    }
+}
+
+fun getDirectPreviousDate(fullDate: FullDate, numberDays : Int) : FullDate{
+    val a = if(1 < fullDate.day){
+        FullDate(fullDate.year,fullDate.month,fullDate.day-1, listOf())
+    }else{
+        val numberOfDayPerYearAndMonth = getNumberDaysByMonth(fullDate.month,fullDate.year)
+        if(fullDate.month==1){
+            FullDate(fullDate.year-1,12,numberOfDayPerYearAndMonth, listOf())
+        }else{
+            FullDate(fullDate.year,fullDate.month-1,numberOfDayPerYearAndMonth, listOf())
+        }
+    }
+    return if(numberDays<=-2){
+        getDirectNextDate(a,numberDays + 1)
+    }else{
+        a
+    }
+}
+
 // current date
 var current = CurrentDate(0,0)
 fun currentDateConfiguration(): List<CalendarInput>{
     val calendar = Calendar.getInstance()
-    val month = calendar.get(Calendar.MONTH)
+    /**
+     * todo month + 1 ?
+     */
+    val month = calendar.get(Calendar.MONTH)+1
     val year = calendar.get(Calendar.YEAR)
     current = CurrentDate(month,year)
     return createCalendarList(month,year)
@@ -363,6 +391,9 @@ private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
     val calendar = Calendar.getInstance()
     val numberOfDaysInMonth = getNumberDaysByMonth(month, year)
     calendar[Calendar.YEAR] = year
+    /**
+     * todo month + 1
+     */
     calendar[Calendar.MONTH] = month
     calendar[Calendar.DAY_OF_MONTH] = 1
     // 1..7
@@ -402,7 +433,7 @@ object CalendarStatic{
     var CALENDAR_ROWS = 5
 }
 
-fun getAcceptedDays(day: ChoiceDAY = ChoiceDAY.TODAY): FullDate{
+/*fun getAcceptedDays(day: ChoiceDAY = ChoiceDAY.TODAY): FullDate{
     var processDay = todayDate()
     processDay = when(day){
         ChoiceDAY.TODAY -> {
@@ -419,14 +450,14 @@ fun getAcceptedDays(day: ChoiceDAY = ChoiceDAY.TODAY): FullDate{
         }
     }
     return processDay
-}
+}*/
 
 fun todayDate() : FullDate{
     val calendar = Calendar.getInstance()
-    return FullDate(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH), listOf())
+    return FullDate(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH)+1,calendar.get(Calendar.DAY_OF_MONTH), listOf())
 }
 
-fun getTomorrowDate(processDay: FullDate): FullDate {
+/*fun getTomorrowDate(processDay: FullDate): FullDate {
     // year + month + day
     TODO()
 }
@@ -434,6 +465,6 @@ fun getTomorrowDate(processDay: FullDate): FullDate {
 fun getYesterdayDate(processDay : FullDate): FullDate {
     //
     TODO()
-}
+}*/
 
 private const val CALENDAR_COLUMNS = 7

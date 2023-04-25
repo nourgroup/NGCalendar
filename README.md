@@ -1,29 +1,24 @@
 # NGCalendar 
-## library is using the code from <a href="https://github.com/MatthiasKerat/CalendarYT">CalendarYT</a>
+##### this library based on the code from <a href="https://github.com/MatthiasKerat/CalendarYT">CalendarYT</a>
 
-## installation of library you ca proceed :
+### to install library proceed to the following steps :
 
-### build.gradle (app)
+#### build.gradle (app)
 implementation project(':ngCalendar')
 
-### settings.gradle
+#### settings.gradle
 include ':ngCalendar'
 
-### run Calendar :
+#### run Calendar :
 FullCalendar{
     Log.i("test_calendar","MainActivity $it")
 }
 
 ### FullCalendar is compose function that you can call: 
-
-@Composable
-fun FullCalendar(
-    startFilterDAY : ChoiceDAY = ChoiceDAY.ALL,
-    endFilterDAY : DayHour? = null,
-    listenerClickDay : (DayHour) -> Unit
-) {
-...
-}
+#### pass params as bellow : 
+startFilterDAY : ChoiceDAY = ChoiceDAY.ALL,
+endFilterDAY : DayHour? = null,
+listenerClickDay : (DayHour) -> Unit
 
 ### you can assign one of these value to startFilterDAY parameter: 
 enum class ChoiceDAY {
@@ -31,6 +26,5 @@ enum class ChoiceDAY {
 }
 ALL         : calendar will take as start date default variable 1900/01/01 
 YESTERDAY   : Not yet implemented
-TODAY       : Activate a day that is app launch
+TODAY       : calendar will take as start a current day 
 TOMORROW    : Not yet implemented
-
