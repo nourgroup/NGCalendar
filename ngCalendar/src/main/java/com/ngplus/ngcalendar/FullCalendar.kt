@@ -59,7 +59,8 @@ fun FullCalendar(
         mutableStateOf<CalendarInput?>(null)
     }
     var dayState by remember {
-        mutableStateOf<FullDate?>(FullDate(1900, 1, 1, listOf()))
+        // by default, took 7 because it is the first date that will contain full correct date, and avoid => 0/0/0 listOf()
+        mutableStateOf<FullDate?>(FullDate(calendarInputList[7].day.year,calendarInputList[7].day.month,calendarInputList[7].day.day, listOf()))
     }
     Box(
         modifier = Modifier
@@ -77,6 +78,9 @@ fun FullCalendar(
                 //  now we can just take seventh element to display month and year.
                 // good to know that we put 0,0,0 in the begin of canvas to say the first day in which day so , seventh element should be at least contain the first day of year/month
                 dayState = FullDate(it[7].day.year,it[7].day.month,it[7].day.day, listOf())
+                /**
+                 * detect row's number
+                 */
                 CalendarStatic.CALENDAR_ROWS = detectNumberOfRow(calendarInputList)
                 Log.i("test_calendar","${todayDate()}")
             },
@@ -123,6 +127,7 @@ fun Calendar(
         mutableStateOf(currentDateConfiguration())
     }
     val scope = rememberCoroutineScope()
+
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.End
@@ -297,12 +302,15 @@ fun getDateByAddingNumberOfDaysToCurrentDate(fullDate: FullDate, numberDays : In
     }
 }
 
+/**
+ * month 12
+ */
 fun getDirectNextDate(fullDate: FullDate, numberDays : Int) : FullDate{
     val numberOfDayPerYearAndMonth = getNumberDaysByMonth(fullDate.month,fullDate.year)
     val a = if(numberOfDayPerYearAndMonth > fullDate.day){
          FullDate(fullDate.year,fullDate.month,fullDate.day+1, listOf())
     }else{
-        if(fullDate.month==12){
+        if(fullDate.month==11){
             FullDate(fullDate.year+1,1,1, listOf())
         }else{
             FullDate(fullDate.year,fullDate.month+1,1, listOf())
@@ -315,13 +323,16 @@ fun getDirectNextDate(fullDate: FullDate, numberDays : Int) : FullDate{
     }
 }
 
+/**
+ * month 12
+ */
 fun getDirectPreviousDate(fullDate: FullDate, numberDays : Int) : FullDate{
     val a = if(1 < fullDate.day){
         FullDate(fullDate.year,fullDate.month,fullDate.day-1, listOf())
     }else{
         val numberOfDayPerYearAndMonth = getNumberDaysByMonth(fullDate.month,fullDate.year)
         if(fullDate.month==1){
-            FullDate(fullDate.year-1,12,numberOfDayPerYearAndMonth, listOf())
+            FullDate(fullDate.year-1,11,numberOfDayPerYearAndMonth, listOf())
         }else{
             FullDate(fullDate.year,fullDate.month-1,numberOfDayPerYearAndMonth, listOf())
         }
@@ -348,7 +359,7 @@ fun currentDateConfiguration(): List<CalendarInput>{
 // current selected date + 1 month
 fun nextCurrentDateConfiguration(): List<CalendarInput>{
     current = if(isTheLastMonthOfYear()){
-        CurrentDate(1,current.year+1)
+        CurrentDate(0,current.year+1)
     }else{
         CurrentDate(current.month+1,current.year)
     }
