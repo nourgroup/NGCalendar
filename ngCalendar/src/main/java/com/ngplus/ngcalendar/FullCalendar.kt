@@ -302,16 +302,16 @@ fun getDateByAddingNumberOfDaysToCurrentDate(fullDate: FullDate, numberDays : In
     }
 }
 
-/**
- * month 12
- */
+const val lastMonthOfYear = 12
+const val firstMonthOfYear = 1
+
 fun getDirectNextDate(fullDate: FullDate, numberDays : Int) : FullDate{
     val numberOfDayPerYearAndMonth = getNumberDaysByMonth(fullDate.month,fullDate.year)
     val a = if(numberOfDayPerYearAndMonth > fullDate.day){
          FullDate(fullDate.year,fullDate.month,fullDate.day+1, listOf())
     }else{
-        if(fullDate.month==11){
-            FullDate(fullDate.year+1,1,1, listOf())
+        if(fullDate.month==lastMonthOfYear){
+            FullDate(fullDate.year+1, firstMonthOfYear,1, listOf())
         }else{
             FullDate(fullDate.year,fullDate.month+1,1, listOf())
         }
@@ -323,16 +323,13 @@ fun getDirectNextDate(fullDate: FullDate, numberDays : Int) : FullDate{
     }
 }
 
-/**
- * month 12
- */
 fun getDirectPreviousDate(fullDate: FullDate, numberDays : Int) : FullDate{
     val a = if(1 < fullDate.day){
         FullDate(fullDate.year,fullDate.month,fullDate.day-1, listOf())
     }else{
-        val numberOfDayPerYearAndMonth = getNumberDaysByMonth(fullDate.month,fullDate.year)
-        if(fullDate.month==1){
-            FullDate(fullDate.year-1,11,numberOfDayPerYearAndMonth, listOf())
+        val numberOfDayPerYearAndMonth = getNumberDaysByMonth(fullDate.month-1,fullDate.year)
+        if(fullDate.month== firstMonthOfYear){
+            FullDate(fullDate.year-1, lastMonthOfYear,numberOfDayPerYearAndMonth, listOf())
         }else{
             FullDate(fullDate.year,fullDate.month-1,numberOfDayPerYearAndMonth, listOf())
         }
@@ -349,9 +346,9 @@ var current = CurrentDate(0,0)
 fun currentDateConfiguration(): List<CalendarInput>{
     val calendar = Calendar.getInstance()
     /**
-     * todo month as it is
+     * todo month + 1
      */
-    val month = calendar.get(Calendar.MONTH)
+    val month = calendar.get(Calendar.MONTH) + 1
     val year = calendar.get(Calendar.YEAR)
     current = CurrentDate(month,year)
     return createCalendarList(month,year)
@@ -359,7 +356,7 @@ fun currentDateConfiguration(): List<CalendarInput>{
 // current selected date + 1 month
 fun nextCurrentDateConfiguration(): List<CalendarInput>{
     current = if(isTheLastMonthOfYear()){
-        CurrentDate(0,current.year+1)
+        CurrentDate(firstMonthOfYear,current.year+1)
     }else{
         CurrentDate(current.month+1,current.year)
     }
@@ -370,14 +367,14 @@ fun nextCurrentDateConfiguration(): List<CalendarInput>{
  * design pattern
  */
 fun isTheLastMonthOfYear(): Boolean{
-    if(current.month==11){
+    if(current.month== lastMonthOfYear){
         return true
     }
     return false
 }
 
 fun isTheFistMonthOfYear(): Boolean{
-    if(current.month==0){
+    if(current.month== firstMonthOfYear){
         return true
     }
     return false
@@ -385,7 +382,7 @@ fun isTheFistMonthOfYear(): Boolean{
 
 fun previousCurrentDateConfiguration(): List<CalendarInput>{
     current = if(isTheFistMonthOfYear()){
-        CurrentDate(11,current.year-1)
+        CurrentDate(lastMonthOfYear,current.year-1)
     }else{
         CurrentDate(current.month-1,current.year)
     }
@@ -394,10 +391,7 @@ fun previousCurrentDateConfiguration(): List<CalendarInput>{
 
 fun getNumberDaysByMonth(month : Int, year : Int): Int{
     val calendar = Calendar.getInstance()
-    /**
-     * todo month - 1
-     */
-    calendar.set(Calendar.MONTH, month)
+    calendar.set(Calendar.MONTH, month - 1)
     calendar.set(Calendar.YEAR, year)
     return calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
 }
@@ -409,16 +403,16 @@ private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
     val numberOfDaysInMonth = getNumberDaysByMonth(month, year)
     calendar[Calendar.YEAR] = year
     /**
-     * todo month + 1
+     * todo month - 1
      */
-    calendar[Calendar.MONTH] = month
+    calendar[Calendar.MONTH] = month - 1
     calendar[Calendar.DAY_OF_MONTH] = 1
-    // 1..7
+    // -1 because it return number between 1..7
     val firstDayInMonthUS = calendar[Calendar.DAY_OF_WEEK] - 1
+    // french calendar begin with monday
     val firstDayInMonth = mapFrenchCalendar[firstDayInMonthUS]
 
-    // begin data from API
-    // fill all days with 0 until the first day in month
+    // fill all days with 0/0/0 until the first day in month
     repeat(  firstDayInMonth - 1){
         calendarInputs.add(CalendarInput(FullDate(0,0,0, listOf(""))))
     }
@@ -435,53 +429,26 @@ private fun createCalendarList(month : Int, year : Int): List<CalendarInput> {
 
 /**
  * number of row for the calendar to be drawn
- * @listDay contain all days plus
+ * @listDay contain all days
  */
 fun detectNumberOfRow(listDay : List<CalendarInput>) : Int{
-    var res = listDay.size / 7
-    if((listDay.size % 7)!=0){
+    val numberOfDays = 7
+    var res = listDay.size / numberOfDays
+    if((listDay.size % numberOfDays) != 0){
         res++
     }
     return res
 }
 
+/**
+ * get date
+ */
+fun todayDate() : FullDate{
+    val calendar = Calendar.getInstance()
+    return FullDate(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH) + 1,calendar.get(Calendar.DAY_OF_MONTH), listOf())
+}
 // by default
 object CalendarStatic{
     var CALENDAR_ROWS = 5
 }
-
-/*fun getAcceptedDays(day: ChoiceDAY = ChoiceDAY.TODAY): FullDate{
-    var processDay = todayDate()
-    processDay = when(day){
-        ChoiceDAY.TODAY -> {
-            todayDate()
-        }
-        ChoiceDAY.YESTERDAY -> {
-            getYesterdayDate(processDay)
-        }
-        ChoiceDAY.TOMORROW -> {
-            getTomorrowDate(processDay)
-        }
-        ChoiceDAY.ALL -> {
-            FullDate(1900,1,1, listOf())
-        }
-    }
-    return processDay
-}*/
-
-fun todayDate() : FullDate{
-    val calendar = Calendar.getInstance()
-    return FullDate(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH), listOf())
-}
-
-/*fun getTomorrowDate(processDay: FullDate): FullDate {
-    // year + month + day
-    TODO()
-}
-
-fun getYesterdayDate(processDay : FullDate): FullDate {
-    //
-    TODO()
-}*/
-
 private const val CALENDAR_COLUMNS = 7
