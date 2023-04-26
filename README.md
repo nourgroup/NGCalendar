@@ -13,21 +13,13 @@ include ':ngCalendar'
 android.enableJetifier=false
 
 #### run Calendar :
-FullCalendar{
+FullCalendar(0,10){
+    day.value = it
     Log.i("test_calendar","MainActivity $it")
 }
-
 ### FullCalendar is compose function that you can call: 
 #### pass params as bellow : 
-startFilterDAY : ChoiceDAY = ChoiceDAY.ALL,
-endFilterDAY : DayHour? = null,
-listenerClickDay : (DayHour) -> Unit
 
-### you can assign one of these value to startFilterDAY parameter: 
-enum class ChoiceDAY {
-    ALL,YESTERDAY,TODAY,TOMORROW
-}
-ALL         : calendar will take as start date default variable 1900/01/01 
-YESTERDAY   : Not yet implemented
-TODAY       : calendar will take as start a current day 
-TOMORROW    : Not yet implemented
+
+### activate days by putting number that belong to the current date
+#### ex. 
