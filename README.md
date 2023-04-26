@@ -9,6 +9,9 @@ implementation project(':ngCalendar')
 #### settings.gradle
 include ':ngCalendar'
 
+#### project don't need to activate jetifier 
+android.enableJetifier=false
+
 #### run Calendar :
 FullCalendar{
     Log.i("test_calendar","MainActivity $it")
