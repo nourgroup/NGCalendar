@@ -35,9 +35,6 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     // TODO lib return month-1 ,user have to add one to the month
-                    // ALL, YESTERDAY, TODAY, TOMORROW
-                    // DAY.ALL is by default
-                    // endFilterDAY = Day(2023,5,30, listOf())
                     FullCalendar(0,10){
                         day.value = it
                         Log.i("test_calendar","MainActivity $it")
