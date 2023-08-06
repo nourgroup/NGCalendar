@@ -1,10 +1,14 @@
 package com.ngplus.ngcalendar
 
-class FullDate(val year: Int, val month : Int, val day : Int, val hours: List<String>): Comparable<FullDate>{
+class FullDate(
+    val year: Int = 0,
+    val month: Int = 0,
+    val day: Int = 0,
+    val hours: List<String> = listOf()
+) : Comparable<FullDate> {
     override fun equals(other: Any?): Boolean {
-        //return super.equals(other)
         val day = other as FullDate
-        return day.day==this.day && day.month==this.month && day.year==this.year
+        return day.day == this.day && day.month == this.month && day.year == this.year
     }
 
     override fun hashCode(): Int {
@@ -16,23 +20,23 @@ class FullDate(val year: Int, val month : Int, val day : Int, val hours: List<St
     }
 
     override fun compareTo(other: FullDate): Int {
-        return if(this.year>other.year){
-             1
-        }else if(this.year==other.year){
-            if(this.month>other.month){
-               1
-            }else if(this.month==other.month){
-                if(this.day>other.day){
-                     1
-                }else if(this.day==other.day){
+        return if (this.year > other.year) {
+            1
+        } else if (this.year == other.year) {
+            if (this.month > other.month) {
+                1
+            } else if (this.month == other.month) {
+                if (this.day > other.day) {
+                    1
+                } else if (this.day == other.day) {
                     0
-                }else{
+                } else {
                     -1
                 }
-            }else{
+            } else {
                 -1
             }
-        }else{
+        } else {
             -1
         }
     }

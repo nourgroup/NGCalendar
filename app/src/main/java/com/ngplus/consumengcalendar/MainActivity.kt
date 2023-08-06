@@ -1,14 +1,12 @@
 package com.ngplus.consumengcalendar
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,37 +16,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ngplus.consumengcalendar.ui.theme.ConsumeNGCalendarTheme
+import com.ngplus.ngcalendar.CalendarTypeSelection
 import com.ngplus.ngcalendar.FullCalendar
 import com.ngplus.ngcalendar.FullDate
+import com.ngplus.ngcalendar.ui.theme.whiteGray
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val day = remember{
-                mutableStateOf(FullDate(1,1,1, listOf("")))
+            val firstDate = remember {
+                mutableStateOf(FullDate())
             }
-            ConsumeNGCalendarTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+            val secondDate = remember {
+                mutableStateOf(FullDate())
+            }
+            // A surface container using the 'background' color from the theme
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize(),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp)
+                        .background(whiteGray)
                 ) {
-                    // TODO lib return month-1 ,user have to add one to the month
-                    FullCalendar(0,10){
-                        day.value = it
-                        Log.i("test_calendar","MainActivity $it")
+                    // example. Allow user to select 30 days before the current date
+                    // and 60 days after the current date
+                    FullCalendar(-30, 60, CalendarTypeSelection.TwoDateSelection) {
+                        firstDate.value = it["first_date"]!!
+                        secondDate.value = it["second_date"]!!
                     }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp)
-                    ) {
-                        Text(text = "${day.value.year}/${day.value.month}/${day.value.day}")
-                        day.value.hours.forEach {
-                            Text(it)
-                        }
-                    }
+                    Text(text = "first : ${firstDate.value}")
+                    Text(text = "second : ${secondDate.value}")
                 }
             }
         }
@@ -61,8 +62,8 @@ class MainActivity : ComponentActivity() {
 fun DefaultPreview() {
     ConsumeNGCalendarTheme {
         FullCalendar(
-            2,20
-        ){
+            2, 20
+        ) {
         }
     }
 }
