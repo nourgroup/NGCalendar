@@ -13,12 +13,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -41,25 +39,27 @@ private val mapFrenchCalendar = listOf(7, 1, 2, 3, 4, 5, 6)
 /*
 TODO
  - add type calendar to choose two dates for use case :
- ex. departure dat/arrival date, order/pickup
+ ex. departure dat/arrival date, order/pickup (branch feature-select-two-date )
+ - add days in top of calendar
  - disable a specific dates
  */
 @Composable
 fun FullCalendar(
     numberOfDaysBeforeCurrentDate: Int,
     numberOfDaysAfterCurrentDate: Int,
-    listenerClickDay: (FullDate) -> Unit
+    calendarTypeSelection: CalendarTypeSelection = CalendarTypeSelection.TwoDateSelection,
+    listenerClickDay: (Map<String, FullDate>) -> Unit
 ) {
     var calendarInputList by remember {
         mutableStateOf(currentDateConfiguration())
     }
-    var clickedCalendarElem by remember {
+    /*var clickedCalendarElem by remember {
         mutableStateOf<CalendarInput?>(null)
-    }
-    var dayState by remember {
+    }*/
+    var dayNavigationMonthAndYear by remember {
         // why 7 ?
-        // we know that "calendarInputList" contain all month dates but, if month begin in friday we put 0/0/0 in monday,tuesday,wednesday, thursday the in friday a correct day/month/year
-        // so in range of 7 ... 27 we sure that we avoid value "0/0/0" and get the alright day/month/year,
+        // we know that "calendarInputList" contain all month dates but, if month begin in friday we put 0/0/0 in monday,tuesday,wednesday, thursday and in friday a correct 01/month/year
+        // so in range of 7 ... 20 we sure that we avoid value "0/0/0" and get the alright day/month/year,
         mutableStateOf<FullDate?>(
             FullDate(
                 calendarInputList[7].day.year,
@@ -69,6 +69,8 @@ fun FullCalendar(
             )
         )
     }
+    // case 2/2 : detect row's number when launching calendar
+    CalendarStatic.CALENDAR_ROWS = findNumberOfRows(calendarInputList)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -82,17 +84,22 @@ fun FullCalendar(
                 calendarInputList = it
                 // TODO find other solution
                 //  now we can just take the seventh element to display month and year. see above the explanation
-                // good to know that we assign value 0,0,0 to list to draw canvas, should be at least contain the first day of year/month
-                dayState = FullDate(it[7].day.year, it[7].day.month, it[7].day.day, listOf())
-                //detect row's number
+                // good to know that we assign value 0,0,0 to list to draw canvas, so in index 7 should be at least contain the first day of year/month
+                // navigation month/year
+                dayNavigationMonthAndYear = FullDate(it[7].day.year, it[7].day.month, it[7].day.day, listOf())
+                // case 1/2 : detect row's number when user click on month/year navigation button
                 CalendarStatic.CALENDAR_ROWS = findNumberOfRows(calendarInputList)
+                reDrawWhenNavigationMonthAndYear()
             },
             onDayClicked = { day ->
-                clickedCalendarElem = calendarInputList.find { it.day == day }
-                dayState = day
+                // search hour for selected day
+                // clickedCalendarElem = calendarInputList.find { it.day == day["first_date"] }
+                // navigation month/year why?
+                // dayNavigationMonthAndYear = day["first_date"]
+                // client listener
                 listenerClickDay(day)
             },
-            titleDate = "${dayState?.month}/${dayState?.year}",
+            titleDate = "${dayNavigationMonthAndYear?.month}/${dayNavigationMonthAndYear?.year}",
             modifier = Modifier
                 .padding(10.dp)
                 .fillMaxWidth()
@@ -107,7 +114,7 @@ fun Calendar(
     numberOfDaysAfterCurrentDate: Int,
     modifier: Modifier = Modifier,
     onMonthAndYearClicked: (List<CalendarInput>) -> Unit,
-    onDayClicked: (FullDate) -> Unit,
+    onDayClicked: (Map<String, FullDate>) -> Unit,
     strokeWidth: Float = 5f,
     titleDate: String
 ) {
@@ -139,7 +146,9 @@ fun Calendar(
             horizontalArrangement = Arrangement.Center
         ) {
             IconButton(onClick = {
+                // get current month-1 configuration
                 calendarInputList = previousCurrentDateConfiguration()
+                // list that contain month configuration
                 onMonthAndYearClicked(calendarInputList)
             }) {
                 Icon(
@@ -154,7 +163,9 @@ fun Calendar(
                 fontSize = 20.sp
             )
             IconButton(onClick = {
+                // get current month+1 configuration
                 calendarInputList = nextCurrentDateConfiguration()
+                // list that contain month configuration
                 onMonthAndYearClicked(calendarInputList)
             }) {
                 Icon(
@@ -181,15 +192,19 @@ fun Calendar(
                                 val row =
                                     (offset.y / canvasSize.height * CalendarStatic.CALENDAR_ROWS).toInt() + 1
                                 /*
-                                find the clicked day the belong to canvas
+                                find the clicked day that belong to canvas position
                                  */
                                 val indexDay = (column - 1) + (row - 1) * CALENDAR_COLUMNS
+                                // ensure that the index is not longer than size of days
                                 if (calendarInputList.size > indexDay) {
                                     val selectedDay = calendarInputList[indexDay]
                                     if (selectedDay.day.day <= calendarInputList.size) {
                                         if (selectedDay.day in startFilterDAY..endFilterDAY) {
+                                            // call function that return Map
+                                            // and detect if selected day is first_date or second_date
+                                            getMapDate(selectedDay.day)
                                             // call listener
-                                            onDayClicked(selectedDay.day)
+                                            onDayClicked(mapDates)
                                             clickAnimationOffset = offset
                                             scope.launch {
                                                 animate(
@@ -210,6 +225,7 @@ fun Calendar(
                 val canvasHeight = size.height
                 val canvasWidth = size.width
                 canvasSize = Size(canvasWidth, canvasHeight)
+                // find size of each square
                 val ySteps = canvasHeight / CalendarStatic.CALENDAR_ROWS
                 val xSteps = canvasWidth / CALENDAR_COLUMNS
 
@@ -225,11 +241,12 @@ fun Calendar(
                     lineTo((column - 1) * xSteps, row * ySteps)
                     close()
                 }
-
+                // draw selected day
+                // calendarTypeSelection
                 clipPath(path) {
                     drawCircle(
                         brush = Brush.radialGradient(
-                            listOf(orange.copy(0.8f), orange.copy(0.2f)),
+                            listOf(orange.copy(1f), orange.copy(1f)),
                             center = clickAnimationOffset,
                             radius = animationRadius + 0.1f
                         ),
@@ -238,13 +255,13 @@ fun Calendar(
                     )
                 }
 
-                drawRoundRect(
+                /*drawRoundRect(
                     orange,
                     cornerRadius = CornerRadius(5f, 5f),
                     style = Stroke(
                         width = strokeWidth
                     )
-                )
+                )*/
                 /*
                 draw lines for row
                  */
@@ -299,7 +316,23 @@ fun Calendar(
             }
         }
     }
+}
 
+fun reDrawWhenNavigationMonthAndYear(){
+
+}
+/**
+ * @param day : selected day by user
+ */
+val mapDates = mutableMapOf("first_date" to FullDate(), "second_date" to FullDate())
+fun getMapDate(day: FullDate?) {
+    // always assign first_date if chosen date is the first for user or
+    // chosen date is lower than first_date
+    if (mapDates["first_date"] == FullDate() || day!! <= mapDates["first_date"]!!) {
+        mapDates["first_date"] = day!!
+    } else {
+        mapDates["second_date"] = day
+    }
 }
 
 fun getDateByAddingNumberOfDaysToCurrentDate(fullDate: FullDate, numberDays: Int): FullDate {
